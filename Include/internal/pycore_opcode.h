@@ -136,6 +136,7 @@ const uint8_t _PyOpcode_Deopt[256] = {
     [GET_YIELD_FROM_ITER] = GET_YIELD_FROM_ITER,
     [IMPORT_FROM] = IMPORT_FROM,
     [IMPORT_NAME] = IMPORT_NAME,
+    [EAGER_IMPORT_NAME] = EAGER_IMPORT_NAME,
     [IMPORT_STAR] = IMPORT_STAR,
     [IS_OP] = IS_OP,
     [JUMP_BACKWARD] = JUMP_BACKWARD,
@@ -351,6 +352,7 @@ static const char *const _PyOpcode_OpName[267] = {
     [LOAD_ATTR] = "LOAD_ATTR",
     [COMPARE_OP] = "COMPARE_OP",
     [IMPORT_NAME] = "IMPORT_NAME",
+    [EAGER_IMPORT_NAME] = "EAGER_IMPORT_NAME",
     [IMPORT_FROM] = "IMPORT_FROM",
     [JUMP_FORWARD] = "JUMP_FORWARD",
     [JUMP_IF_FALSE_OR_POP] = "JUMP_IF_FALSE_OR_POP",
@@ -425,7 +427,6 @@ static const char *const _PyOpcode_OpName[267] = {
     [UNPACK_SEQUENCE_LIST] = "UNPACK_SEQUENCE_LIST",
     [UNPACK_SEQUENCE_TUPLE] = "UNPACK_SEQUENCE_TUPLE",
     [UNPACK_SEQUENCE_TWO_TUPLE] = "UNPACK_SEQUENCE_TWO_TUPLE",
-    [183] = "<183>",
     [184] = "<184>",
     [185] = "<185>",
     [186] = "<186>",
@@ -513,7 +514,6 @@ static const char *const _PyOpcode_OpName[267] = {
 #endif
 
 #define EXTRA_CASES \
-    case 183: \
     case 184: \
     case 185: \
     case 186: \
