@@ -1571,6 +1571,15 @@ cfg_builder_addop_j(cfg_builder *g, int opcode, basicblock *target, struct locat
         return 0; \
 }
 
+#define ADDOP_IMPORT(C, O, TYPE) { \
+    if (((C)->u->u_scope_type == COMPILER_SCOPE_MODULE) \
+        && ((C)->u->u_nfblocks == 0)) { \
+        ADDOP_NAME((C), IMPORT_NAME, (O), TYPE); \
+    } else { \
+        ADDOP_NAME((C), EAGER_IMPORT_NAME, (O), TYPE); \
+    } \
+}
+
 #define ADDOP_I(C, OP, O) { \
     if (!cfg_builder_addop_i(CFG_BUILDER(C), (OP), (O), COMPILER_LOC(C))) \
         return 0; \
@@ -3830,7 +3839,7 @@ compiler_import(struct compiler *c, stmt_ty s)
 
         ADDOP_LOAD_CONST(c, zero);
         ADDOP_LOAD_CONST(c, Py_None);
-        ADDOP_NAME(c, IMPORT_NAME, alias->name, names);
+        ADDOP_IMPORT(c, alias->name, names);
 
         if (alias->asname) {
             r = compiler_import_as(c, alias->name, alias->asname);
@@ -3885,11 +3894,11 @@ compiler_from_import(struct compiler *c, stmt_ty s)
     ADDOP_LOAD_CONST_NEW(c, names);
 
     if (s->v.ImportFrom.module) {
-        ADDOP_NAME(c, IMPORT_NAME, s->v.ImportFrom.module, names);
+        ADDOP_IMPORT(c, s->v.ImportFrom.module, names);
     }
     else {
         _Py_DECLARE_STR(empty, "");
-        ADDOP_NAME(c, IMPORT_NAME, &_Py_STR(empty), names);
+        ADDOP_IMPORT(c, &_Py_STR(empty), names);
     }
     for (i = 0; i < n; i++) {
         alias_ty alias = (alias_ty)asdl_seq_GET(s->v.ImportFrom.names, i);
