@@ -1824,6 +1824,7 @@ handle_eval_breaker:
 
         TARGET(STORE_FAST) {
             PyObject *value = POP();
+            assert(!PyLazyImport_CheckExact(value));
             SETLOCAL(oparg, value);
             DISPATCH();
         }
@@ -2789,10 +2790,13 @@ handle_eval_breaker:
                 Py_DECREF(v);
                 goto error;
             }
-            if (PyDict_CheckExact(ns))
+            if (PyDict_CheckExact(ns)) {
+                if (PyLazyImport_CheckExact(v))
+                    _PyDict_SetHasLazyImports(ns);
                 err = PyDict_SetItem(ns, name, v);
-            else
+            } else {
                 err = PyObject_SetItem(ns, name, v);
+            }
             Py_DECREF(v);
             if (err != 0)
                 goto error;
@@ -2934,6 +2938,7 @@ handle_eval_breaker:
         TARGET(STORE_GLOBAL) {
             PyObject *name = GETITEM(names, oparg);
             PyObject *v = POP();
+            assert(!PyLazyImport_CheckExact(v));
             int err;
             err = PyDict_SetItem(GLOBALS(), name, v);
             Py_DECREF(v);
