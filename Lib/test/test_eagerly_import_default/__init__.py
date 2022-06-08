@@ -11,8 +11,10 @@
 import os
 import sys
 import unittest
-# import json
-import sqlite3
+import test.test_eagerly_import_default.imported_module
+from test.test_eagerly_import_default.imported_module2 import print_log
+# import test.test_eagerly_import_default.non_imported_module
+
 
 class LazyImportsEnabledChecker:
     def __init__(self):
@@ -24,18 +26,20 @@ class LazyImportsEnabledChecker:
         enabled = False
 
         # check if Lazy Imports is turned on
-        enabled |= self.check_flag()
-        enabled |= self.check_env_var()
-        return enabled
+        return (
+            self.check_flag() |
+            self.check_env_var()
+        )
 
     # check if the env variable PYTHONLAZYIMPORTSALL is set
     def check_env_var(self):
         env_variables = os.environ
-        if "PYTHONLAZYIMPORTSALL" not in env_variables:
+        env_var_lazy_imports = "PYTHONLAZYIMPORTSALL"
+        if env_var_lazy_imports not in env_variables:
             return False
 
-        # check this setting of this env_var
-        if env_variables["PYTHONLAZYIMPORTSALL"] == "0":
+        # Python's env variables only care about if the value is empty or not
+        if env_variables[env_var_lazy_imports] == "":
             return False
         else:
             return True
@@ -44,7 +48,7 @@ class LazyImportsEnabledChecker:
     def check_flag(self):
         argvs = sys.argv
         for argv in argvs:
-            if argv == "-L" or argv == "-l":
+            if argv == "-L":
                 return True
         return False
 
@@ -58,17 +62,20 @@ class TestEagerlyImport(unittest.TestCase):
         super(TestEagerlyImport, self).__init__(*args, **kwargs)
         self.modules = sys.modules
 
-    def test_json(self):
-        # we did not import json, so we should not have these sub-modules
-        self.assertFalse("json.encoder" in self.modules)
-        self.assertFalse("json.decoder" in self.modules)
+    def test_non_imported_module(self):
+        # we did not import non_imported_module, so we should not have this sub-module of non_imported_module
+        self.assertFalse("test.test_eagerly_import_default.non_imported_module_sub" in self.modules)
 
-    def test_sqlite3(self):
-        # we import sqlite3 at the beginning, so we should have sqlite3.dbapi2 in sys.modules
-        self.assertTrue("sqlite3.dbapi2" in self.modules)
+    def test_imported_module(self):
+        # we import imported_module at the beginning, so we should have its sub-module in sys.modules
+        self.assertTrue("test.test_eagerly_import_default.imported_module_sub" in self.modules)
+
+    def test_imported_module2(self):
+        # we import imported_module2 by using different import way at the beginning, but we should still have its sub-module
+        self.assertTrue("test.test_eagerly_import_default.imported_module_sub2" in self.modules)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     lazy_imports_checker = LazyImportsEnabledChecker()
 
