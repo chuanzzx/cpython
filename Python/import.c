@@ -99,6 +99,40 @@ _PyImportZip_Init(PyThreadState *tstate)
     return _PyStatus_ERR("initializing zipimport failed");
 }
 
+
+/* Debugging functions */
+
+// Print the message to stderr if -v/PYTHONVERBOSE is turned on
+// Only allow one args in message
+static void
+_verbose_message(const char *message, const char *args)
+{
+    PyThreadState *tstate = _PyThreadState_GET();
+    int verbose = _PyInterpreterState_GetConfig(tstate->interp)->verbose;
+
+    if (verbose) {
+        // confirm the prefix of message matches any keyword
+        if (strlen(message) >= 1 && (
+            strncmp(message, "#", 1) == 0 || strncmp(message, "import ", 7) == 0
+        )) {
+            // match keyword, just print it
+            fprintf(stderr, message, args);
+        }
+        else {
+            // rebuild output message
+            char *new_prefix = "# ";
+            char *new_message = malloc(strlen(new_prefix) + strlen(message) + 1); // allocate memory
+            strcpy(new_message, new_prefix);
+            strcat(new_message, message);
+            fprintf(stderr, new_message, args);
+
+            free(new_message); // free the memory
+            new_message = NULL;
+        }
+    }
+}
+
+
 /* Locking primitives to prevent parallel imports of the same module
    in different threads to return with a partially loaded module.
    These calls are serialized by the global interpreter lock. */
@@ -2077,15 +2111,14 @@ PyImport_ImportName(PyObject *builtins, PyObject *globals, PyObject *locals,
                     PyObject *name, PyObject *fromlist, PyObject *level)  // replaces PyImport_DeferredImportName
 {
     PyThreadState *tstate = _PyThreadState_GET();
-    int verbose = _PyInterpreterState_GetConfig(tstate->interp)->verbose;
     int lazy_imports_enabled = _PyInterpreterState_GetConfig(tstate->interp)->lazy_imports;
 
     if (!lazy_imports_enabled) {
         return PyImport_EagerImportName(builtins, globals, locals, name, fromlist, level, NULL);
     }
-    if (verbose) {
-        fprintf(stderr, "# lazy import '%s'\n", PyUnicode_AsUTF8(name));
-    }
+
+    // _verbose_message will check verbose mode
+    _verbose_message("# lazy import '%s'\n", PyUnicode_AsUTF8(name));
 
     int ilevel = _PyLong_AsInt(level);
     if (ilevel == -1 && PyErr_Occurred()) {
