@@ -99,6 +99,71 @@ _PyImportZip_Init(PyThreadState *tstate)
     return _PyStatus_ERR("initializing zipimport failed");
 }
 
+
+/* Debugging functions */
+
+// Check if message starts with keyword
+// Return True if keyword is the prefix of message
+static bool
+_startswith(const char *message, const char *keyword)
+{
+    size_t len_message = strlen(message);
+    size_t len_keyword = strlen(keyword);
+
+    if (len_message < len_keyword) {
+        return false;
+    }
+
+    // check if the prefix of message matches keyword or not
+    for (size_t i = 0; i < len_keyword; i++) {
+        if (keyword[i] != message[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Print the message to stderr if -v/PYTHONVERBOSE is turned on
+static void
+_verbose_message(const char *message, const char *args)
+{
+    PyThreadState *tstate = _PyThreadState_GET();
+    int verbose = _PyInterpreterState_GetConfig(tstate->interp)->verbose;
+
+    if (verbose) {
+        // confirm the prefix of message matches any keyword
+        bool startswith_keywords = false;
+        char keywords[2][8] = {
+                                "#",
+                                "import "
+                            };
+
+        for (int idx = 0; idx < 2; idx++) {
+            char *keyword = keywords[idx];
+
+            if (_startswith(message, keyword)) {
+                // found a matched keyword
+                startswith_keywords = true;
+                break;
+            }
+        }
+
+        if (startswith_keywords) {
+            // match keyword, just print it
+            fprintf (stderr, message, args);
+        }
+        else {
+            // rebuild output message
+            char *new_prefix = "# ";
+            char *new_message = malloc(strlen(new_prefix) + strlen(message) + 1);
+            strcpy(new_message, new_prefix);
+            strcat(new_message, message);
+            fprintf (stderr, new_message, args);
+        }
+    }
+}
+
+
 /* Locking primitives to prevent parallel imports of the same module
    in different threads to return with a partially loaded module.
    These calls are serialized by the global interpreter lock. */
@@ -2077,15 +2142,14 @@ PyImport_ImportName(PyObject *builtins, PyObject *globals, PyObject *locals,
                     PyObject *name, PyObject *fromlist, PyObject *level)  // replaces PyImport_DeferredImportName
 {
     PyThreadState *tstate = _PyThreadState_GET();
-    int verbose = _PyInterpreterState_GetConfig(tstate->interp)->verbose;
     int lazy_imports_enabled = _PyInterpreterState_GetConfig(tstate->interp)->lazy_imports;
 
     if (!lazy_imports_enabled) {
         return PyImport_EagerImportName(builtins, globals, locals, name, fromlist, level, NULL);
     }
-    if (verbose) {
-        fprintf(stderr, "# lazy import '%s'\n", PyUnicode_AsUTF8(name));
-    }
+
+    // _verbose_message will check verbose mode
+    _verbose_message("# lazy import '%s'\n", PyUnicode_AsUTF8(name));
 
     int ilevel = _PyLong_AsInt(level);
     if (ilevel == -1 && PyErr_Occurred()) {
