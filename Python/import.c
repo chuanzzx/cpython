@@ -112,17 +112,11 @@ _verbose_message(const char *message, const char *args)
 
     if (verbose) {
         // confirm the prefix of message matches any keyword
-        bool startswith_keywords = false;
-
         if (strlen(message) >= 1 && (
             strncmp(message, "#", 1) == 0 || strncmp(message, "import ", 7) == 0
         )) {
-            startswith_keywords = true;
-        }
-
-        if (startswith_keywords) {
             // match keyword, just print it
-            fprintf (stderr, message, args);
+            fprintf(stderr, message, args);
         }
         else {
             // rebuild output message
@@ -130,7 +124,7 @@ _verbose_message(const char *message, const char *args)
             char *new_message = malloc(strlen(new_prefix) + strlen(message) + 1); // allocate memory
             strcpy(new_message, new_prefix);
             strcat(new_message, message);
-            fprintf (stderr, new_message, args);
+            fprintf(stderr, new_message, args);
 
             free(new_message); // free the memory
             new_message = NULL;
