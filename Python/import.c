@@ -102,28 +102,8 @@ _PyImportZip_Init(PyThreadState *tstate)
 
 /* Debugging functions */
 
-// Check if message starts with keyword
-// Return True if keyword is the prefix of message
-static bool
-_startswith(const char *message, const char *keyword)
-{
-    size_t len_message = strlen(message);
-    size_t len_keyword = strlen(keyword);
-
-    if (len_message < len_keyword) {
-        return false;
-    }
-
-    // check if the prefix of message matches keyword or not
-    for (size_t i = 0; i < len_keyword; i++) {
-        if (keyword[i] != message[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
 // Print the message to stderr if -v/PYTHONVERBOSE is turned on
+// Only allow one args in message
 static void
 _verbose_message(const char *message, const char *args)
 {
@@ -133,19 +113,13 @@ _verbose_message(const char *message, const char *args)
     if (verbose) {
         // confirm the prefix of message matches any keyword
         bool startswith_keywords = false;
-        char keywords[2][8] = {
-                                "#",
-                                "import "
-                            };
 
-        for (int idx = 0; idx < 2; idx++) {
-            char *keyword = keywords[idx];
+        if (strlen(message) >= 1 && (strncmp(message, "#", 1) == 0)) {
+            startswith_keywords = true;
+        }
 
-            if (_startswith(message, keyword)) {
-                // found a matched keyword
-                startswith_keywords = true;
-                break;
-            }
+        if (strlen(message) >= 7 && strncmp(message, "import ", 7) == 0)) {
+            startswith_keywords = true;
         }
 
         if (startswith_keywords) {
@@ -155,10 +129,13 @@ _verbose_message(const char *message, const char *args)
         else {
             // rebuild output message
             char *new_prefix = "# ";
-            char *new_message = malloc(strlen(new_prefix) + strlen(message) + 1);
+            char *new_message = malloc(strlen(new_prefix) + strlen(message) + 1); // allocate memory
             strcpy(new_message, new_prefix);
             strcat(new_message, message);
             fprintf (stderr, new_message, args);
+
+            free(new_message); // free the memory
+            new_message = NULL;
         }
     }
 }
