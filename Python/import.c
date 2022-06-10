@@ -114,11 +114,9 @@ _verbose_message(const char *message, const char *args)
         // confirm the prefix of message matches any keyword
         bool startswith_keywords = false;
 
-        if (strlen(message) >= 1 && strncmp(message, "#", 1) == 0) {
-            startswith_keywords = true;
-        }
-
-        if (strlen(message) >= 7 && strncmp(message, "import ", 7) == 0) {
+        if (strlen(message) >= 1 && (
+            strncmp(message, "#", 1) == 0 || strncmp(message, "import ", 7) == 0
+        )) {
             startswith_keywords = true;
         }
 
