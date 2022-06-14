@@ -26,6 +26,10 @@ extern "C" {
 
 /* Forward references */
 static PyObject *import_add_module(PyThreadState *tstate, PyObject *name);
+PyObject * _PyImport_ImportModuleLevelObject(
+    PyObject *name, PyObject *globals,
+    PyObject *locals, PyObject *fromlist,
+    int level, PyObject *lazy_loaded);
 
 /* See _PyImport_FixupExtensionObject() below */
 static PyObject *extensions = NULL;
@@ -1680,7 +1684,7 @@ resolve_name(PyThreadState *tstate, PyObject *name, PyObject *globals, int level
 }
 
 static PyObject *
-import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
+import_find_and_load(PyThreadState *tstate, PyObject *abs_name, PyObject *lazy_loaded)
 {
     PyObject *mod = NULL;
     PyInterpreterState *interp = tstate->interp;
@@ -1722,8 +1726,9 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
     if (PyDTrace_IMPORT_FIND_LOAD_START_ENABLED())
         PyDTrace_IMPORT_FIND_LOAD_START(PyUnicode_AsUTF8(abs_name));
 
-    mod = PyObject_CallMethodObjArgs(interp->importlib, &_Py_ID(_find_and_load),
-                                     abs_name, interp->import_func, NULL);
+    mod = PyObject_CallMethodObjArgs(
+        interp->importlib, &_Py_ID(_find_and_load), abs_name,
+        interp->import_func, lazy_loaded ? lazy_loaded : Py_None, NULL);
 
     if (PyDTrace_IMPORT_FIND_LOAD_DONE_ENABLED())
         PyDTrace_IMPORT_FIND_LOAD_DONE(PyUnicode_AsUTF8(abs_name),
@@ -1802,7 +1807,7 @@ _PyImport_LazyImportModuleLevelObject(
 
 PyObject *
 PyImport_EagerImportName(PyObject *builtins, PyObject *globals, PyObject *locals,
-                         PyObject *name, PyObject *fromlist, PyObject *level)
+                         PyObject *name, PyObject *fromlist, PyObject *level, PyObject *lazy_loaded)
 {
     PyObject *import_func, *res;
     PyObject* stack[5];
@@ -1822,12 +1827,13 @@ PyImport_EagerImportName(PyObject *builtins, PyObject *globals, PyObject *locals
         if (ilevel == -1 && _PyErr_Occurred(tstate)) {
             return NULL;
         }
-        res = PyImport_ImportModuleLevelObject(
+        res = _PyImport_ImportModuleLevelObject(
                         name,
                         globals,
                         locals == NULL ? Py_None :locals,
                         fromlist,
-                        ilevel);
+                        ilevel,
+                        lazy_loaded);
         return res;
     }
 
@@ -1854,7 +1860,7 @@ PyImport_ImportName(PyObject *builtins, PyObject *globals, PyObject *locals,
     int lazy_imports_enabled = _PyInterpreterState_GetConfig(tstate->interp)->lazy_imports;
 
     if (!lazy_imports_enabled) {
-        return PyImport_EagerImportName(builtins, globals, locals, name, fromlist, level);
+        return PyImport_EagerImportName(builtins, globals, locals, name, fromlist, level, NULL);
     }
     int ilevel = _PyLong_AsInt(level);
     if (ilevel == -1 && PyErr_Occurred()) {
@@ -1864,15 +1870,15 @@ PyImport_ImportName(PyObject *builtins, PyObject *globals, PyObject *locals,
     // limiting cases of actual laziness for incremental implementation & debugging
     if (ilevel != 0) {
         if (verbose) fprintf(stderr, "# NOT READY FOR lazy import '%s' (level=%d)\n", PyUnicode_AsUTF8(name), ilevel);
-        return PyImport_EagerImportName(builtins, globals, locals, name, fromlist, level);
+        return PyImport_EagerImportName(builtins, globals, locals, name, fromlist, level, NULL);
     }
     if ((fromlist != NULL) && !Py_IsNone(fromlist)) {
         if (verbose) fprintf(stderr, "# NOT READY FOR lazy import '%s' (non-empty fromlist)\n", PyUnicode_AsUTF8(name));
-        return PyImport_EagerImportName(builtins, globals, locals, name, fromlist, level);
+        return PyImport_EagerImportName(builtins, globals, locals, name, fromlist, level, NULL);
     }
     if (PyUnicode_FindChar(name, '.', 0, PyUnicode_GET_LENGTH(name), -1) >= 0) {
         if (verbose) fprintf(stderr, "# NOT READY FOR lazy import '%s' (dotted import)\n", PyUnicode_AsUTF8(name));
-        return PyImport_EagerImportName(builtins, globals, locals, name, fromlist, level);
+        return PyImport_EagerImportName(builtins, globals, locals, name, fromlist, level, NULL);
     }
 
     if (verbose) {
@@ -1973,8 +1979,8 @@ _imp_load_lazy_import_impl(PyLazyImport *lazy_import)  // was _imp_import_deferr
                                        lazy_import->lz_locals,
                                        lazy_import->lz_name,
                                        lazy_import->lz_fromlist,
-                                       lazy_import->lz_level);
-                                    //    lazy_loaded);
+                                       lazy_import->lz_level,
+                                       lazy_loaded);
         Py_XDECREF(lazy_loaded);
         if (obj == NULL) {
             return NULL;
@@ -2020,9 +2026,9 @@ PyImport_GetModule(PyObject *name)
 }
 
 PyObject *
-PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
+_PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
                                  PyObject *locals, PyObject *fromlist,
-                                 int level)
+                                 int level, PyObject *lazy_loaded)
 {
     PyThreadState *tstate = _PyThreadState_GET();
     PyObject *abs_name = NULL;
@@ -2079,7 +2085,7 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
     }
     else {
         Py_XDECREF(mod);
-        mod = import_find_and_load(tstate, abs_name);
+        mod = import_find_and_load(tstate, abs_name, lazy_loaded);
         if (mod == NULL) {
             goto error;
         }
@@ -2168,6 +2174,14 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
         remove_importlib_frames(tstate);
     }
     return final_mod;
+}
+
+PyObject *
+PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
+                                 PyObject *locals, PyObject *fromlist,
+                                 int level)
+{
+    return _PyImport_ImportModuleLevelObject(name, globals, locals, fromlist, level, NULL);
 }
 
 PyObject *
