@@ -1059,8 +1059,10 @@ Py_ssize_t
 dict_lookup_impl(PyDictObject *mp, PyObject *key, Py_hash_t hash, PyObject **value_addr, int resolve_lazy_imports)
 {
     PyObject *value;
+    PyObject *resolved_import = NULL;
     PyDictKeysObject *dk;
     DictKeysKind kind;
+    PyObject *startkey = NULL;
     Py_ssize_t ix;
 
 start:
@@ -1085,6 +1087,7 @@ start:
             }
             else {
                 value = DK_UNICODE_ENTRIES(dk)[ix].me_value;
+                startkey = DK_UNICODE_ENTRIES(dk)[ix].me_key;
             }
         }
     }
@@ -1095,10 +1098,57 @@ start:
         }
         if (ix >= 0) {
             value = DK_ENTRIES(dk)[ix].me_value;
+            startkey = DK_ENTRIES(dk)[ix].me_key;
         }
     }
 
+    if (resolve_lazy_imports && value && PyLazyImport_CheckExact(value)) {
+        assert(kind != DICT_KEYS_SPLIT && (ix >= 0));
+        assert(resolved_import == NULL);
+
+        if (resolved_import == NULL) {
+            assert(startkey != NULL);
+            Py_INCREF(startkey);
+            Py_INCREF(value);
+            resolved_import = PyImport_LoadLazyImport(value);
+            Py_XINCREF(resolved_import);
+            Py_DECREF(value);
+            Py_DECREF(startkey);
+            if (resolved_import == NULL) {
+                *value_addr = NULL;
+                return DKIX_VALUE_ERROR;
+            }
+            // changed?
+            assert(dk == mp->ma_keys);
+            if (kind != DICT_KEYS_GENERAL) {
+                assert(DK_UNICODE_ENTRIES(dk)[ix].me_key == startkey);
+            } else {
+                assert(DK_ENTRIES(dk)[ix].me_key == startkey);
+            }
+        }
+
+        assert(value != resolved_import);
+        if (value == resolved_import) {
+            // can't get here
+            assert(0);
+        } else {
+            // store it back in the dict
+            assert(resolved_import != NULL);
+            assert(kind != DICT_KEYS_SPLIT);
+            if (kind != DICT_KEYS_GENERAL) {
+                DK_UNICODE_ENTRIES(dk)[ix].me_value = resolved_import;
+            } else {
+                DK_ENTRIES(dk)[ix].me_value = resolved_import;
+            }
+            mp->ma_version_tag = DICT_NEXT_VERSION();
+        }
+        value = resolved_import;
+    }
+
     *value_addr = value;
+    if (resolve_lazy_imports && value) {
+        assert(!PyLazyImport_CheckExact(*value_addr));
+    }
     return ix;
 }
 
