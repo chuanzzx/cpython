@@ -1316,7 +1316,7 @@ insertdict(PyDictObject *mp, PyObject *key, Py_hash_t hash, PyObject *value)
     }
 
     Py_ssize_t ix = _Py_dict_lookup(mp, key, hash, &old_value);
-    if (ix == DKIX_ERROR)
+    if (ix == DKIX_ERROR || ix == DKIX_VALUE_ERROR)
         goto Fail;
 
     MAINTAIN_TRACKING(mp, key, value);
@@ -1934,7 +1934,7 @@ _PyDict_LoadGlobal(PyDictObject *globals, PyDictObject *builtins, PyObject *key)
 
     /* namespace 1: globals */
     ix = _Py_dict_lookup(globals, key, hash, &value);
-    if (ix == DKIX_ERROR)
+    if (ix == DKIX_ERROR || ix == DKIX_VALUE_ERROR)
         return NULL;
     if (ix != DKIX_EMPTY && value != NULL)
         return value;
@@ -2100,7 +2100,7 @@ _PyDict_DelItem_KnownHash(PyObject *op, PyObject *key, Py_hash_t hash)
     assert(hash != -1);
     mp = (PyDictObject *)op;
     ix = _Py_dict_lookup(mp, key, hash, &old_value);
-    if (ix == DKIX_ERROR)
+    if (ix == DKIX_ERROR || ix == DKIX_VALUE_ERROR)
         return -1;
     if (ix == DKIX_EMPTY || old_value == NULL) {
         _PyErr_SetKeyError(key);
@@ -2134,7 +2134,7 @@ _PyDict_DelItemIf(PyObject *op, PyObject *key,
         return -1;
     mp = (PyDictObject *)op;
     ix = _Py_dict_lookup(mp, key, hash, &old_value);
-    if (ix == DKIX_ERROR)
+    if (ix == DKIX_ERROR || ix == DKIX_VALUE_ERROR)
         return -1;
     if (ix == DKIX_EMPTY || old_value == NULL) {
         _PyErr_SetKeyError(key);
@@ -2304,7 +2304,7 @@ _PyDict_Pop_KnownHash(PyObject *dict, PyObject *key, Py_hash_t hash, PyObject *d
         return NULL;
     }
     ix = _Py_dict_lookup(mp, key, hash, &old_value);
-    if (ix == DKIX_ERROR)
+    if (ix == DKIX_ERROR || ix == DKIX_VALUE_ERROR)
         return NULL;
     if (ix == DKIX_EMPTY || old_value == NULL) {
         if (deflt) {
@@ -2580,7 +2580,7 @@ dict_subscript(PyDictObject *mp, PyObject *key)
             return NULL;
     }
     ix = _Py_dict_lookup(mp, key, hash, &value);
-    if (ix == DKIX_ERROR)
+    if (ix == DKIX_ERROR || ix == DKIX_VALUE_ERROR)
         return NULL;
     if (ix == DKIX_EMPTY || value == NULL) {
         if (!PyDict_CheckExact(mp)) {
@@ -3336,7 +3336,7 @@ dict___contains__(PyDictObject *self, PyObject *key)
             return NULL;
     }
     ix = _Py_dict_lookup(mp, key, hash, &value);
-    if (ix == DKIX_ERROR)
+    if (ix == DKIX_ERROR || ix == DKIX_VALUE_ERROR)
         return NULL;
     if (ix == DKIX_EMPTY || value == NULL)
         Py_RETURN_FALSE;
@@ -3367,7 +3367,7 @@ dict_get_impl(PyDictObject *self, PyObject *key, PyObject *default_value)
             return NULL;
     }
     ix = _Py_dict_lookup(self, key, hash, &val);
-    if (ix == DKIX_ERROR)
+    if (ix == DKIX_ERROR || ix == DKIX_VALUE_ERROR)
         return NULL;
     if (ix == DKIX_EMPTY || val == NULL) {
         val = default_value;
@@ -3410,7 +3410,7 @@ PyDict_SetDefault(PyObject *d, PyObject *key, PyObject *defaultobj)
     }
 
     Py_ssize_t ix = _Py_dict_lookup(mp, key, hash, &value);
-    if (ix == DKIX_ERROR)
+    if (ix == DKIX_ERROR || ix == DKIX_VALUE_ERROR)
         return NULL;
 
     if (ix == DKIX_EMPTY) {
@@ -3783,7 +3783,7 @@ PyDict_Contains(PyObject *op, PyObject *key)
             return -1;
     }
     ix = _Py_dict_lookup(mp, key, hash, &value);
-    if (ix == DKIX_ERROR)
+    if (ix == DKIX_ERROR || ix == DKIX_VALUE_ERROR)
         return -1;
     return (ix != DKIX_EMPTY && value != NULL);
 }
@@ -3797,7 +3797,7 @@ _PyDict_Contains_KnownHash(PyObject *op, PyObject *key, Py_hash_t hash)
     Py_ssize_t ix;
 
     ix = _Py_dict_lookup(mp, key, hash, &value);
-    if (ix == DKIX_ERROR)
+    if (ix == DKIX_ERROR || ix == DKIX_VALUE_ERROR)
         return -1;
     return (ix != DKIX_EMPTY && value != NULL);
 }
