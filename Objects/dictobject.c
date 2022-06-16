@@ -1315,7 +1315,7 @@ insertdict(PyDictObject *mp, PyObject *key, Py_hash_t hash, PyObject *value)
         assert(mp->ma_keys->dk_kind == DICT_KEYS_GENERAL);
     }
 
-    Py_ssize_t ix = _Py_dict_lookup(mp, key, hash, &old_value);
+    Py_ssize_t ix = dict_lookup_keep_lazy(mp, key, hash, &old_value);
     if (ix == DKIX_ERROR || ix == DKIX_VALUE_ERROR)
         goto Fail;
 
