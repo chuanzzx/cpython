@@ -83,6 +83,9 @@ struct _is {
     PyObject *importlib;
     PyObject *lazy_loaded;
 
+    // modules need to be eager when enabling lazy imports
+    PyObject *eager_loaded;
+
     /* Used in Python/sysmodule.c. */
     int check_interval;
 

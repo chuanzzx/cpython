@@ -2557,10 +2557,37 @@ _imp_is_lazy_import_impl(PyObject *module, PyObject *dict, PyObject *key)
 }
 
 static PyObject *
-_imp_set_lazy_imports_impl(PyObject *module)
+_imp_set_lazy_imports_impl(PyObject *module, PyObject *eager_imports)
 {
+    PyInterpreterState *interp = _PyInterpreterState_Get();
+
+    // *will* need to eagerly import modules in `eager_imports`
+    if (eager_imports != Py_None) {
+
+        if (interp->eager_loaded == NULL) {
+            interp->eager_loaded = PySet_New(NULL);
+        }
+        else {
+            Py_CLEAR(interp->eager_loaded);
+            interp->eager_loaded = PySet_New(NULL);
+
+            // size = PySet_GET_SIZE(interp->eager_loaded);
+            // printf("Set size: %zd \n", size);
+        }
+
+        // record each eager_import
+        Py_ssize_t i, n_imports;
+        n_imports = PyList_Size(eager_imports);
+
+        for (i = 0; i < n_imports; i++) {
+            PyObject *eager_import = PyList_GetItem(eager_imports, i);
+            printf("Will eagerly import %s ! \n", PyUnicode_AsUTF8(eager_import));
+            PySet_Add(interp->eager_loaded, eager_import);
+        }
+    }
+
+    // enable lazy imports
     PyImport_EnableLazyImports();
-    printf("PyImport_IsLazyImportsEnabled: %d\n", PyImport_IsLazyImportsEnabled());
     Py_RETURN_NONE;
 }
 

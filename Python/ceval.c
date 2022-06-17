@@ -3035,10 +3035,18 @@ main_loop:
                 }
             }
 
-            if ((_PyEval_LazyImportsEnabled &&
+
+            PyInterpreterState *interp = _PyInterpreterState_Get();
+            // PyInterpreterState *interp = _PyInterpreterState_GET_UNSAFE();
+            int is_eager = (interp->eager_loaded != NULL && PySet_Contains(interp->eager_loaded, name));
+            // printf("*** is_eager (%s): %d\n", PyUnicode_AsUTF8(name), is_eager);
+
+            if ((!is_eager) &&
+                (_PyEval_LazyImportsEnabled &&
                  lazy_imports &&
                  f->f_globals == f->f_locals &&
-                 f->f_iblock == 0)) {
+                 f->f_iblock == 0))
+            {
                 res = PyImport_DeferredImportName(name,
                                                   f->f_globals,
                                                   f->f_locals == NULL ? Py_None : f->f_locals,
