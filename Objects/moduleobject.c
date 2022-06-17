@@ -1007,6 +1007,12 @@ deferred_name(PyDeferredObject *m)
     return m->df_name;
 }
 
+PyObject *
+PyLazyImportObject_GetLazyImportName(PyObject *deferred_obj)
+{
+    return deferred_name((PyDeferredObject *)deferred_obj);
+}
+
 static PyObject *
 deferred_repr(PyDeferredObject *m)
 {

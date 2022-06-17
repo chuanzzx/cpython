@@ -3099,9 +3099,29 @@ main_loop:
             PyObject *name = GETITEM(names, oparg);
             PyObject *from = TOP();
             PyObject *res;
+
+
             if (PyDeferred_CheckExact(from)) {
-                res = PyDeferred_NewObject((PyObject *)from, name);
-            } else {
+                res = PyDeferred_NewObject(from, name);
+
+                PyObject *fullname = PyLazyImportObject_GetLazyImportName(res);
+                if ((tstate->interp)->eager_loaded != NULL &&
+                    PySet_Contains((tstate->interp)->eager_loaded, fullname))
+                {
+                    printf("**** IMPORT_FROM LOAD fullname: %s\n", PyUnicode_AsUTF8(fullname));
+                    res = PyImport_ImportDeferred(res); // load
+                }
+                Py_DECREF(fullname);
+            }
+
+            // if (PyDeferred_CheckExact(from)) {
+            //     res = PyDeferred_NewObject((PyObject *)from, name);
+
+            //     PyObject *fullname = PyLazyImportObject_GetLazyImportName(res);
+            //     printf("**** IMPORT_FROM LOAD fullname: %s\n", PyUnicode_AsUTF8(fullname));
+
+            // }
+            else {
                 res = _Py_DoImportFrom(tstate, from, name);
             }
             PUSH(res);

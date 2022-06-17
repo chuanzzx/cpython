@@ -28,6 +28,8 @@ PyAPI_FUNC(PyCFunction) PyCFunction_GetFunction(PyObject *);
 PyAPI_FUNC(PyObject *) PyCFunction_GetSelf(PyObject *);
 PyAPI_FUNC(int) PyCFunction_GetFlags(PyObject *);
 
+PyAPI_FUNC(PyObject *) PyLazyImportObject_GetLazyImportName(PyObject *);
+
 /* Macros for direct access to these values. Type checks are *not*
    done, so use with care. */
 #ifndef Py_LIMITED_API
