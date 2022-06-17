@@ -2541,6 +2541,21 @@ _imp_source_hash_impl(PyObject *module, long key, Py_buffer *source)
     return PyBytes_FromStringAndSize(hash.data, sizeof(hash.data));
 }
 
+static PyObject *
+_imp_is_lazy_import_impl(PyObject *module, PyObject *dict, PyObject *key)
+{
+    int res = PyDict_IsLazyImport(dict, key);
+
+    if (res == -1) {
+        PyErr_SetObject(PyExc_KeyError, key);
+        return NULL;
+    }
+    if (res == 1) {
+        Py_RETURN_TRUE;
+    }
+    Py_RETURN_FALSE;
+}
+
 
 PyDoc_STRVAR(doc_imp,
 "(Extremely) low-level import machinery bits as used by importlib and imp.");
@@ -2561,6 +2576,7 @@ static PyMethodDef imp_methods[] = {
     _IMP_EXEC_BUILTIN_METHODDEF
     _IMP__FIX_CO_FILENAME_METHODDEF
     _IMP_SOURCE_HASH_METHODDEF
+    _IMP_IS_LAZY_IMPORT_METHODDEF
     {NULL, NULL}  /* sentinel */
 };
 
@@ -2674,6 +2690,8 @@ PyImport_AppendInittab(const char *name, PyObject* (*initfunc)(void))
 
     return PyImport_ExtendInittab(newtab);
 }
+
+
 
 #ifdef __cplusplus
 }
