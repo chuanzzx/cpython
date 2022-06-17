@@ -88,6 +88,9 @@ PyAPI_FUNC(PyObject *) PyImport_ImportModuleLevelObject(
     );
 #endif
 
+PyAPI_FUNC(int) PyImport_IsLazyImportsEnabled(void);
+PyAPI_FUNC(void) PyImport_EnableLazyImports(void);
+
 #define PyImport_ImportModuleEx(n, g, l, f) \
     PyImport_ImportModuleLevel(n, g, l, f, 0)
 

@@ -247,6 +247,8 @@ PyInterpreterState_New(void)
 
     interp->audit_hooks = NULL;
 
+    interp->lazy_imports_enabled = 0;
+
     return interp;
 }
 

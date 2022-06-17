@@ -2556,6 +2556,14 @@ _imp_is_lazy_import_impl(PyObject *module, PyObject *dict, PyObject *key)
     Py_RETURN_FALSE;
 }
 
+static PyObject *
+_imp_set_lazy_imports_impl(PyObject *module)
+{
+    PyImport_EnableLazyImports();
+    printf("PyImport_IsLazyImportsEnabled: %d\n", PyImport_IsLazyImportsEnabled());
+    Py_RETURN_NONE;
+}
+
 
 PyDoc_STRVAR(doc_imp,
 "(Extremely) low-level import machinery bits as used by importlib and imp.");
@@ -2577,6 +2585,7 @@ static PyMethodDef imp_methods[] = {
     _IMP__FIX_CO_FILENAME_METHODDEF
     _IMP_SOURCE_HASH_METHODDEF
     _IMP_IS_LAZY_IMPORT_METHODDEF
+    _IMP_SET_LAZY_IMPORTS_METHODDEF
     {NULL, NULL}  /* sentinel */
 };
 
@@ -2691,6 +2700,31 @@ PyImport_AppendInittab(const char *name, PyObject* (*initfunc)(void))
     return PyImport_ExtendInittab(newtab);
 }
 
+
+// Return 1 if lazy imports is enabled
+// Return 0 if lazy imports is not enabled
+int
+PyImport_IsLazyImportsEnabled()
+{
+    PyInterpreterState *interp = _PyInterpreterState_Get();
+    // printf("interp->lazy_imports_enabled: %d\n", interp->lazy_imports_enabled);
+
+    if (interp->lazy_imports_enabled ||
+        interp->config.lazy_imports)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+void
+PyImport_EnableLazyImports()
+{
+    PyInterpreterState *interp = _PyInterpreterState_Get();
+
+    assert(interp != NULL);
+    interp->lazy_imports_enabled = 1;
+}
 
 
 #ifdef __cplusplus

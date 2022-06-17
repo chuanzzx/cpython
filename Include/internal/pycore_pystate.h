@@ -136,6 +136,9 @@ struct _is {
     struct _warnings_runtime_state warnings;
 
     PyObject *audit_hooks;
+
+    /* whether lazy imports was enabled at runtime */
+    int lazy_imports_enabled;
 };
 
 PyAPI_FUNC(struct _is*) _PyInterpreterState_LookUpID(PY_INT64_T);

@@ -3014,22 +3014,31 @@ main_loop:
             PyObject *level = TOP();
             PyObject *res;
 
+            // printf("_PyEval_LazyImportsEnabled: %d\n", _PyEval_LazyImportsEnabled);
+            // printf("lazy_imports 1:             %d\n", lazy_imports);
+            // printf("Py_LazyImportsFlag:         %d\n", Py_LazyImportsFlag);
+
+            if (PyImport_IsLazyImportsEnabled())
+                Py_LazyImportsFlag = 1;
+
             if (_PyEval_LazyImportsEnabled && lazy_imports == -1) {
                 if (co->co_flags & 0 /*CO_FUTURE_EAGER_IMPORTS*/) { /* TODO: Lazy Imports: Figure out a flag to disable per module */
                     lazy_imports = 0;
                 } else {
                     lazy_imports = Py_LazyImportsFlag;
                 }
+
+                // printf("lazy_imports 2: %d\n", lazy_imports);
                 if (lazy_imports) {
                     _PyDict_SetItemId(f->f_globals,
                                       &PyId___lazy_imports__, Py_True);
                 }
             }
 
-            if (_PyEval_LazyImportsEnabled
-                && lazy_imports
-                && f->f_globals == f->f_locals
-                && f->f_iblock == 0) {
+            if ((_PyEval_LazyImportsEnabled &&
+                 lazy_imports &&
+                 f->f_globals == f->f_locals &&
+                 f->f_iblock == 0)) {
                 res = PyImport_DeferredImportName(name,
                                                   f->f_globals,
                                                   f->f_locals == NULL ? Py_None : f->f_locals,
