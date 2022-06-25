@@ -630,6 +630,24 @@ exit:
     return return_value;
 }
 
+PyDoc_STRVAR(_imp_set_lazy_imports__doc__,
+"set_lazy_imports($module, /)\n"
+"--\n"
+"\n"
+"Programmatic API for enabling lazy imports at runtime.");
+
+#define _IMP_SET_LAZY_IMPORTS_METHODDEF    \
+    {"set_lazy_imports", (PyCFunction)_imp_set_lazy_imports, METH_NOARGS, _imp_set_lazy_imports__doc__},
+
+static PyObject *
+_imp_set_lazy_imports_impl(PyObject *module);
+
+static PyObject *
+_imp_set_lazy_imports(PyObject *module, PyObject *Py_UNUSED(ignored))
+{
+    return _imp_set_lazy_imports_impl(module);
+}
+
 #ifndef _IMP_CREATE_DYNAMIC_METHODDEF
     #define _IMP_CREATE_DYNAMIC_METHODDEF
 #endif /* !defined(_IMP_CREATE_DYNAMIC_METHODDEF) */
@@ -637,4 +655,4 @@ exit:
 #ifndef _IMP_EXEC_DYNAMIC_METHODDEF
     #define _IMP_EXEC_DYNAMIC_METHODDEF
 #endif /* !defined(_IMP_EXEC_DYNAMIC_METHODDEF) */
-/*[clinic end generated code: output=7d75c10a93f2f26c input=a9049054013a1b77]*/
+/*[clinic end generated code: output=1c2311cc843b3572 input=a9049054013a1b77]*/
