@@ -42,14 +42,11 @@ PyAPI_FUNC(int) _PyDict_DelItem_KnownHash(PyObject *mp, PyObject *key,
                                           Py_hash_t hash);
 PyAPI_FUNC(int) _PyDict_DelItemIf(PyObject *mp, PyObject *key,
                                   int (*predicate)(PyObject *value));
-PyAPI_FUNC(int) _PyDict_Next(
-    PyObject *mp, Py_ssize_t *pos, PyObject **key, PyObject **value, Py_hash_t *hash);
+PyAPI_FUNC(int) _PyDict_Next(PyObject *mp, Py_ssize_t *pos, PyObject **key, PyObject **value,
+                             Py_hash_t *hash, PyObject ***pvalue_ptr);
 
-/* Flag dictionary as having lazy imports in it */
-void _PyDict_SetHasLazyImports(PyObject *);
-
-/* Unflag dictionary as having lazy imports in it */
-void _PyDict_UnsetHasLazyImports(PyObject *);
+/* Return 1 if the given dict has deferred objects, or 0 otherwise. */
+PyAPI_FUNC(int) _PyDict_HasLazyImports(PyObject *);
 
 /* Get the number of items of a dictionary. */
 static inline Py_ssize_t PyDict_GET_SIZE(PyObject *op) {

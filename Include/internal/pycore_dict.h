@@ -62,6 +62,9 @@ extern Py_ssize_t _PyDict_KeysSize(PyDictKeysObject *keys);
  */
 extern Py_ssize_t _Py_dict_lookup(PyDictObject *mp, PyObject *key, Py_hash_t hash, PyObject **value_addr);
 
+/* _Py_dict_lookup_keep_lazy() is the same as _Py_dict_lookup(), but keeps lazy objects unresolved */
+extern Py_ssize_t _Py_dict_lookup_keep_lazy(PyDictObject *mp, PyObject *key, Py_hash_t hash, PyObject **value_addr);
+
 extern Py_ssize_t _PyDict_GetItemHint(PyDictObject *, PyObject *, Py_ssize_t, PyObject **);
 extern Py_ssize_t _PyDictKeys_StringLookup(PyDictKeysObject* dictkeys, PyObject *key);
 extern PyObject *_PyDict_LoadGlobal(PyDictObject *, PyDictObject *, PyObject *);
@@ -95,7 +98,10 @@ struct _dictkeysobject {
     uint8_t dk_log2_index_bytes;
 
     /* Kind of keys */
-    uint8_t dk_kind;
+    uint8_t dk_kind : 7;
+
+    /* Contains lazy imports */
+    uint8_t dk_lazy_imports : 1;
 
     /* Version number -- Reset to 0 by any modification to keys */
     uint32_t dk_version;
