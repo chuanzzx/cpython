@@ -597,11 +597,9 @@ _PyModule_ClearDict(PyObject *d)
 
     int verbose = _Py_GetConfig()->verbose;
 
-    _PyDict_UnsetHasLazyImports(d);
-
     /* First, clear only names starting with a single underscore */
     pos = 0;
-    while (PyDict_Next(d, &pos, &key, &value)) {
+    while (_PyDict_Next(d, &pos, &key, &value, NULL, NULL)) {
         if (value != Py_None && PyUnicode_Check(key)) {
             if (PyUnicode_READ_CHAR(key, 0) == '_' &&
                 PyUnicode_READ_CHAR(key, 1) != '_') {
@@ -621,7 +619,7 @@ _PyModule_ClearDict(PyObject *d)
 
     /* Next, clear all names except for __builtins__ */
     pos = 0;
-    while (PyDict_Next(d, &pos, &key, &value)) {
+    while (_PyDict_Next(d, &pos, &key, &value, NULL, NULL)) {
         if (value != Py_None && PyUnicode_Check(key)) {
             if (PyUnicode_READ_CHAR(key, 0) != '_' ||
                 !_PyUnicode_EqualToASCIIString(key, "__builtins__"))
@@ -643,7 +641,6 @@ _PyModule_ClearDict(PyObject *d)
     /* Note: we leave __builtins__ in place, so that destructors
        of non-global objects defined in this module can still use
        builtins, in particularly 'None'. */
-
 }
 
 /*[clinic input]
@@ -1088,6 +1085,7 @@ PyLazyImportObject_NewObject(PyObject *from, PyObject *name)
 static void
 lazy_import_dealloc(PyLazyImport *m)
 {
+    PyObject_GC_UnTrack(m);
     Py_XDECREF(m->lz_lazy_import);
     Py_XDECREF(m->lz_name);
     Py_XDECREF(m->lz_globals);
@@ -1158,21 +1156,6 @@ lazy_import_clear(PyLazyImport *m)
     Py_CLEAR(m->lz_next);
     Py_CLEAR(m->lz_filename);
     return 0;
-}
-
-int
-PyLazyImport_Match(PyLazyImport *lazy_import, PyObject *mod_dict, PyObject *name)
-{
-    PyObject *mod_name = PyDict_GetItemWithError(mod_dict, &_Py_ID(__name__));
-    if (mod_name == NULL || !PyUnicode_Check(mod_name)) {
-        return 0;
-    }
-    PyObject *fqn = PyUnicode_FromFormat("%U.%U", mod_name, name);
-    PyObject *lazy_import_fqn = lazy_import_name(lazy_import);
-    int match = PyUnicode_Tailmatch(lazy_import_fqn, fqn, 0, PyUnicode_GET_LENGTH(fqn), -1);
-    Py_DECREF(fqn);
-    Py_DECREF(lazy_import_fqn);
-    return match;
 }
 
 PyTypeObject PyLazyImport_Type = {
