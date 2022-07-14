@@ -104,8 +104,6 @@ typedef struct {
     int lz_lineno;
 } PyLazyImport;
 
-int PyLazyImport_Match(PyLazyImport *lazy_import, PyObject *mod_dict, PyObject *name);
-
 // Internal C API
 #ifdef Py_BUILD_CORE
 extern int _PyModule_IsExtension(PyObject *obj);

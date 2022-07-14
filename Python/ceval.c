@@ -2790,8 +2790,14 @@ handle_eval_breaker:
                 goto error;
             }
             if (PyDict_CheckExact(ns)) {
-                if (PyLazyImport_CheckExact(v))
-                    _PyDict_SetHasLazyImports(ns);
+                if (PyLazyImport_CheckExact(v)) {
+                    PyObject *d = PyDict_GetItemKeepLazy(ns, name);
+                    if (d != NULL && PyLazyImport_CheckExact(d)) {
+                        assert(((PyLazyImport *)v)->lz_next == NULL);
+                        Py_INCREF(d);
+                        ((PyLazyImport *)v)->lz_next = d;
+                    }
+                }
                 err = PyDict_SetItem(ns, name, v);
             } else {
                 err = PyObject_SetItem(ns, name, v);
@@ -2937,8 +2943,15 @@ handle_eval_breaker:
         TARGET(STORE_GLOBAL) {
             PyObject *name = GETITEM(names, oparg);
             PyObject *v = POP();
-            assert(!PyLazyImport_CheckExact(v));
             int err;
+            if (PyLazyImport_CheckExact(v)) {
+                PyObject *d = PyDict_GetItemKeepLazy(GLOBALS(), name);
+                if (d != NULL && PyLazyImport_CheckExact(d)) {
+                    assert(((PyLazyImport *)v)->lz_next == NULL);
+                    Py_INCREF(d);
+                    ((PyLazyImport *)v)->lz_next = d;
+                }
+            }
             err = PyDict_SetItem(GLOBALS(), name, v);
             Py_DECREF(v);
             if (err != 0)
@@ -3106,6 +3119,15 @@ handle_eval_breaker:
             PyDictUnicodeEntry *entries = DK_UNICODE_ENTRIES(dict->ma_keys);
             PyObject *res = entries[cache->index].me_value;
             DEOPT_IF(res == NULL, LOAD_GLOBAL);
+            if (PyLazyImport_CheckExact(res)) {
+                assert(dict->ma_keys->dk_lazy_imports);
+                PyObject *resolved = PyImport_LoadLazyImport(res);
+                DEOPT_IF(resolved == NULL, LOAD_GLOBAL);
+                DEOPT_IF(dict->ma_keys->dk_version != version, LOAD_GLOBAL);
+                Py_DECREF(res);
+                entries[cache->index].me_value = resolved;
+                res = resolved;
+            }
             int push_null = oparg & 1;
             PEEK(0) = NULL;
             JUMPBY(INLINE_CACHE_ENTRIES_LOAD_GLOBAL);
@@ -3131,6 +3153,15 @@ handle_eval_breaker:
             PyDictUnicodeEntry *entries = DK_UNICODE_ENTRIES(bdict->ma_keys);
             PyObject *res = entries[cache->index].me_value;
             DEOPT_IF(res == NULL, LOAD_GLOBAL);
+            if (PyLazyImport_CheckExact(res)) {
+                assert(bdict->ma_keys->dk_lazy_imports);
+                PyObject *resolved = PyImport_LoadLazyImport(res);
+                DEOPT_IF(resolved == NULL, LOAD_GLOBAL);
+                DEOPT_IF(bdict->ma_keys->dk_version != bltn_version, LOAD_GLOBAL);
+                Py_DECREF(res);
+                entries[cache->index].me_value = resolved;
+                res = resolved;
+            }
             int push_null = oparg & 1;
             PEEK(0) = NULL;
             JUMPBY(INLINE_CACHE_ENTRIES_LOAD_GLOBAL);
@@ -4089,7 +4120,7 @@ handle_eval_breaker:
             PyObject *level = TOP();
             PyObject *res;
             res = PyImport_EagerImportName(
-                frame->f_builtins, frame->f_globals, frame->f_locals, name, fromlist, level, NULL);
+                BUILTINS(), GLOBALS(), LOCALS(), name, fromlist, level, NULL);
             Py_DECREF(level);
             Py_DECREF(fromlist);
             SET_TOP(res);
@@ -4103,8 +4134,14 @@ handle_eval_breaker:
             PyObject *fromlist = POP();
             PyObject *level = TOP();
             PyObject *res;
-            res = PyImport_ImportName(
-                frame->f_builtins, frame->f_globals, frame->f_locals, name, fromlist, level);
+            if (PyDict_CheckExact(GLOBALS())
+                && PyImport_IsLazyImportsEnabled()) {
+                res = PyImport_LazyImportName(
+                    BUILTINS(), GLOBALS(), LOCALS(), name, fromlist, level);
+            } else {
+                res = PyImport_EagerImportName(
+                    BUILTINS(), GLOBALS(), LOCALS(), name, fromlist, level, NULL);
+            }
             Py_DECREF(level);
             Py_DECREF(fromlist);
             SET_TOP(res);
@@ -4116,6 +4153,20 @@ handle_eval_breaker:
         TARGET(IMPORT_STAR) {
             PyObject *from = POP(), *locals;
             int err;
+
+            if (PyLazyImport_CheckExact(from)) {
+                PyObject *mod = PyImport_LoadLazyImport(from);
+                Py_DECREF(from);
+                if (mod == NULL) {
+                    if (!_PyErr_Occurred(tstate)) {
+                        _PyErr_SetString(tstate, PyExc_SystemError,
+                                         "Lazy Import cycle");
+                    }
+                    goto error;
+                }
+                from = mod;
+            }
+
             if (_PyFrame_FastToLocalsWithError(frame) < 0) {
                 Py_DECREF(from);
                 goto error;
@@ -7465,19 +7516,23 @@ import_all_from(PyThreadState *tstate, PyObject *locals, PyObject *v)
     if (_PyObject_LookupAttr(v, &_Py_ID(__all__), &all) < 0) {
         return -1; /* Unexpected error */
     }
+
+    if (_PyObject_LookupAttr(v, &_Py_ID(__dict__), &dict) < 0) {
+        Py_XDECREF(all);
+        return -1; /* Unexpected error */
+    }
+
     if (all == NULL) {
-        if (_PyObject_LookupAttr(v, &_Py_ID(__dict__), &dict) < 0) {
-            return -1;
-        }
         if (dict == NULL) {
             _PyErr_SetString(tstate, PyExc_ImportError,
                     "from-import-* object has no __dict__ and no __all__");
             return -1;
         }
         all = PyMapping_Keys(dict);
-        Py_DECREF(dict);
-        if (all == NULL)
+        if (all == NULL) {
+            Py_DECREF(dict);
             return -1;
+        }
         skip_leading_underscores = 1;
     }
 
@@ -7528,19 +7583,30 @@ import_all_from(PyThreadState *tstate, PyObject *locals, PyObject *v)
                 continue;
             }
         }
-        value = PyObject_GetAttr(v, name);
-        if (value == NULL)
+        if (PyDict_CheckExact(locals) && dict != NULL && PyDict_CheckExact(dict)) {
+            value = PyDict_GetItemKeepLazy(dict, name);
+            if (value != NULL) {
+                Py_XINCREF(value);
+            } else if (!_PyErr_Occurred(tstate)) {
+                value = PyObject_GetAttr(v, name);
+            }
+        } else {
+            value = PyObject_GetAttr(v, name);
+        }
+        if (value == NULL) {
             err = -1;
-        else if (PyDict_CheckExact(locals))
+        } else if (PyDict_CheckExact(locals)) {
             err = PyDict_SetItem(locals, name, value);
-        else
+        } else {
             err = PyObject_SetItem(locals, name, value);
+        }
         Py_DECREF(name);
         Py_XDECREF(value);
         if (err != 0)
             break;
     }
     Py_DECREF(all);
+    Py_XDECREF(dict);
     return err;
 }
 
