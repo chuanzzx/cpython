@@ -2200,7 +2200,10 @@ _sre_SRE_Match_groupdict_impl(MatchObject *self, PyObject *default_value)
     if (!result || !self->pattern->groupindex)
         return result;
 
-    while (_PyDict_Next(self->pattern->groupindex, &pos, &key, &value, &hash)) {
+    if (PyDict_ResolveLazyImports(self->pattern->groupindex) != 0)
+        goto failed;
+
+    while (_PyDict_Next(self->pattern->groupindex, &pos, &key, &value, &hash, NULL)) {
         int status;
         Py_INCREF(key);
         value = match_getslice(self, key, default_value);
