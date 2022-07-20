@@ -1144,14 +1144,16 @@ def _find_and_load_unlocked(name, import_, lazy_loaded):
         finally:
             if parent_spec:
                 parent_spec._uninitialized_submodules.pop()
-    if parent and (not lazy_loaded or name not in lazy_loaded):
-        # Set the module as an attribute on its parent.
+
+    if parent:
         parent_module = sys.modules[parent]
-        try:
-            setattr(parent_module, child, module)
-        except AttributeError:
-            msg = f"Cannot set an attribute on {parent!r} for child module {child!r}"
-            _warnings.warn(msg, ImportWarning)
+        if not lazy_loaded or id(parent_module) not in lazy_loaded.get(name, set()):
+            # Set the module as an attribute on its parent.
+            try:
+                setattr(parent_module, child, module)
+            except AttributeError:
+                msg = f"Cannot set an attribute on {parent!r} for child module {child!r}"
+                _warnings.warn(msg, ImportWarning)
     return module
 
 
