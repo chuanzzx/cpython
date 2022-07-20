@@ -1790,30 +1790,50 @@ _PyImport_LazyImportModuleLevelObject(
 
     zero = PyLong_FromLong(0);
     lazy_module = PyLazyImportModule_NewObject(abs_name, globals, locals, fromlist, zero);
+    if (lazy_module == NULL) {
+        goto error;
+    }
 
-    if (lazy_module != NULL) {
-        PyInterpreterState *interp = _PyInterpreterState_GET();
-        if (interp->lazy_loaded == NULL) {
-            interp->lazy_loaded = PySet_New(NULL);
-            if (!interp->lazy_loaded) {
-                goto error;
-            }
+    if (_PyImport_GetModule(tstate, abs_name) == NULL) {
+        int verbose = _PyInterpreterState_GetConfig(tstate->interp)->verbose;
+        if (verbose) {
+            fprintf(stderr, "# lazy import '%s'\n", PyUnicode_AsUTF8(abs_name));
         }
+
         /* Crazy side-effects! */
         PyObject *type, *value, *traceback;
         PyErr_Fetch(&type, &value, &traceback);
-        if (!PySet_Contains(interp->lazy_loaded, abs_name) && _PyImport_GetModule(tstate, abs_name) == NULL) {
-            int verbose = _PyInterpreterState_GetConfig(tstate->interp)->verbose;
-            if (verbose) {
-                fprintf(stderr, "# lazy import '%s'\n", PyUnicode_AsUTF8(abs_name));
-            }
-            Py_ssize_t dot = PyUnicode_FindChar(abs_name, '.', 0, PyUnicode_GET_LENGTH(abs_name), -1);
-            if (dot >= 0) {
-                PyObject *parent = PyUnicode_Substring(abs_name, 0, dot);
-                PyObject *existing = _PyImport_GetModule(tstate, parent);
-                if (existing != NULL) {
-                    /* Set the deferred module as an attribute on its parent. */
-                    PyObject *dict = PyObject_GetAttr(existing, &_Py_ID(__dict__));
+        Py_ssize_t dot = PyUnicode_FindChar(abs_name, '.', 0, PyUnicode_GET_LENGTH(abs_name), -1);
+        if (dot >= 0) {
+            PyObject *parent = PyUnicode_Substring(abs_name, 0, dot);
+            PyObject *parent_module = _PyImport_GetModule(tstate, parent);
+            if (parent_module != NULL) {
+                PyObject *parent_id = PyLong_FromVoidPtr(parent_module);
+                if (parent_id == NULL) {
+                    Py_DECREF(parent);
+                    goto error;
+                }
+
+                if (tstate->interp->lazy_loaded == NULL) {
+                    tstate->interp->lazy_loaded = PyDict_New();
+                    if (tstate->interp->lazy_loaded == NULL) {
+                        Py_DECREF(parent);
+                        goto error;
+                    }
+                }
+                PyObject *lazy_loaded_set = PyDict_GetItem(tstate->interp->lazy_loaded, abs_name);
+                if (lazy_loaded_set == NULL) {
+                    lazy_loaded_set = PySet_New(NULL);
+                    if (lazy_loaded_set == NULL) {
+                        goto error;
+                    }
+                    PyDict_SetItem(tstate->interp->lazy_loaded, abs_name, lazy_loaded_set);
+                    Py_DECREF(lazy_loaded_set);
+                }
+
+                /* Set the deferred module as an attribute on its parent. */
+                if (!PySet_Contains(lazy_loaded_set, parent_id)) {
+                    PyObject *dict = PyObject_GetAttr(parent_module, &_Py_ID(__dict__));
                     if (dict != NULL && PyDict_Check(dict)) {
                         PyObject *frmlst = PyList_New(0);
                         if (frmlst != NULL) {
@@ -1834,7 +1854,7 @@ _PyImport_LazyImportModuleLevelObject(
                                         v->lz_next = d;
                                     }
                                     PyDict_SetItem(dict, child, (PyObject *)v);
-                                    PySet_Add(interp->lazy_loaded, abs_name);
+                                    PySet_Add(lazy_loaded_set, parent_id);
                                     Py_DECREF(v);
                                 }
                             }
@@ -1842,8 +1862,9 @@ _PyImport_LazyImportModuleLevelObject(
                         }
                     }
                 }
-                Py_DECREF(parent);
+                Py_DECREF(parent_id);
             }
+            Py_DECREF(parent);
         }
         PyErr_Restore(type, value, traceback);
     }
