@@ -521,6 +521,7 @@ always available.
    :const:`dev_mode`             :option:`-X dev <-X>` (:ref:`Python Development Mode <devmode>`)
    :const:`utf8_mode`            :option:`-X utf8 <-X>`
    :const:`safe_path`            :option:`-P`
+   :const:`lazy_imports`         :option:`-L`
    ============================= ================================================================
 
    .. versionchanged:: 3.2
@@ -543,6 +544,8 @@ always available.
    .. versionchanged:: 3.11
       Added the ``safe_path`` attribute for :option:`-P` option.
 
+   .. versionchanged:: 3.12
+      Added the ``lazy_imports`` attribute for :option:`-P` option.
 
 .. data:: float_info
 
