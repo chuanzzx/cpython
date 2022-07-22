@@ -1119,7 +1119,7 @@ def _sanity_check(name, package, level):
 _ERR_MSG_PREFIX = 'No module named '
 _ERR_MSG = _ERR_MSG_PREFIX + '{!r}'
 
-def _find_and_load_unlocked(name, import_, lazy_loaded):
+def _find_and_load_unlocked(name, import_):
     path = None
     parent = name.rpartition('.')[0]
     parent_spec = None
@@ -1150,23 +1150,20 @@ def _find_and_load_unlocked(name, import_, lazy_loaded):
         finally:
             if parent_spec:
                 parent_spec._uninitialized_submodules.pop()
-
     if parent:
-        parent_module = sys.modules[parent]
-        if not lazy_loaded or id(parent_module) not in lazy_loaded.get(name, set()):
-            # Set the module as an attribute on its parent.
-            try:
-                setattr(parent_module, child, module)
-            except AttributeError:
-                msg = f"Cannot set an attribute on {parent!r} for child module {child!r}"
-                _warnings.warn(msg, ImportWarning)
+        # Set the module as an attribute on its parent.
+        try:
+            _imp._maybe_set_submodule_attribute(parent_module, child, module, name)
+        except AttributeError:
+            msg = f"Cannot set an attribute on {parent!r} for child module {child!r}"
+            _warnings.warn(msg, ImportWarning)
     return module
 
 
 _NEEDS_LOADING = object()
 
 
-def _find_and_load(name, import_, lazy_loaded):
+def _find_and_load(name, import_):
     """Find and load the module."""
 
     # Optimization: we avoid unneeded module locking if the module
@@ -1177,7 +1174,7 @@ def _find_and_load(name, import_, lazy_loaded):
         with _ModuleLockManager(name):
             module = sys.modules.get(name, _NEEDS_LOADING)
             if module is _NEEDS_LOADING:
-                return _find_and_load_unlocked(name, import_, lazy_loaded)
+                return _find_and_load_unlocked(name, import_)
 
         # Optimization: only call _bootstrap._lock_unlock_module() if
         # module.__spec__._initializing is True.
@@ -1205,7 +1202,7 @@ def _gcd_import(name, package=None, level=0):
     _sanity_check(name, package, level)
     if level > 0:
         name = _resolve_name(name, package, level)
-    return _find_and_load(name, _gcd_import, None)
+    return _find_and_load(name, _gcd_import)
 
 
 def _handle_fromlist(module, fromlist, import_, *, recursive=False):
