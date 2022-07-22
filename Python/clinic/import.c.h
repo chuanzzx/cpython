@@ -594,6 +594,52 @@ _imp_is_lazy_imports_enabled(PyObject *module, PyObject *Py_UNUSED(ignored))
     return _imp_is_lazy_imports_enabled_impl(module);
 }
 
+PyDoc_STRVAR(_imp__maybe_set_submodule_attribute__doc__,
+"_maybe_set_submodule_attribute($module, parent_module, child,\n"
+"                               child_module, name, /)\n"
+"--\n"
+"\n"
+"Sets the module as an attribute on its parent, if the side effect is neded.");
+
+#define _IMP__MAYBE_SET_SUBMODULE_ATTRIBUTE_METHODDEF    \
+    {"_maybe_set_submodule_attribute", _PyCFunction_CAST(_imp__maybe_set_submodule_attribute), METH_FASTCALL, _imp__maybe_set_submodule_attribute__doc__},
+
+static PyObject *
+_imp__maybe_set_submodule_attribute_impl(PyObject *module,
+                                         PyObject *parent_module,
+                                         PyObject *child,
+                                         PyObject *child_module,
+                                         PyObject *name);
+
+static PyObject *
+_imp__maybe_set_submodule_attribute(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
+{
+    PyObject *return_value = NULL;
+    PyObject *parent_module;
+    PyObject *child;
+    PyObject *child_module;
+    PyObject *name;
+
+    if (!_PyArg_CheckPositional("_maybe_set_submodule_attribute", nargs, 4, 4)) {
+        goto exit;
+    }
+    parent_module = args[0];
+    child = args[1];
+    child_module = args[2];
+    if (!PyUnicode_Check(args[3])) {
+        _PyArg_BadArgument("_maybe_set_submodule_attribute", "argument 4", "str", args[3]);
+        goto exit;
+    }
+    if (PyUnicode_READY(args[3]) == -1) {
+        goto exit;
+    }
+    name = args[3];
+    return_value = _imp__maybe_set_submodule_attribute_impl(module, parent_module, child, child_module, name);
+
+exit:
+    return return_value;
+}
+
 #ifndef _IMP_CREATE_DYNAMIC_METHODDEF
     #define _IMP_CREATE_DYNAMIC_METHODDEF
 #endif /* !defined(_IMP_CREATE_DYNAMIC_METHODDEF) */
@@ -601,4 +647,4 @@ _imp_is_lazy_imports_enabled(PyObject *module, PyObject *Py_UNUSED(ignored))
 #ifndef _IMP_EXEC_DYNAMIC_METHODDEF
     #define _IMP_EXEC_DYNAMIC_METHODDEF
 #endif /* !defined(_IMP_EXEC_DYNAMIC_METHODDEF) */
-/*[clinic end generated code: output=2cb0591b62658022 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=b34d4df83fc75fe9 input=a9049054013a1b77]*/
