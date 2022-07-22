@@ -1708,6 +1708,17 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, _PyInterpreterFrame *frame, int 
         */ \
     frame->stacktop = -1;
 
+    int lazy_imports_eager_import = 0;
+    if (GLOBALS() == LOCALS()) {
+        PyObject *modname  = _PyDict_GetItemWithError(GLOBALS(), &_Py_ID(__name__));
+        if (modname != NULL) {
+            PyObject *filter = tstate->interp->eager_imports;
+            if (filter != NULL &&
+                PySequence_Contains(filter, modname)) {
+                lazy_imports_eager_import = 1;
+            }
+        }
+    }
 
 start_frame:
     if (_Py_EnterRecursiveCallTstate(tstate, "")) {
@@ -4140,6 +4151,7 @@ handle_eval_breaker:
             PyObject *level = TOP();
             PyObject *res;
             if (PyDict_CheckExact(GLOBALS())
+                && lazy_imports_eager_import == 0
                 && PyImport_IsLazyImportsEnabled()) {
                 res = PyImport_LazyImportName(
                     BUILTINS(), GLOBALS(), LOCALS(), name, fromlist, level);
