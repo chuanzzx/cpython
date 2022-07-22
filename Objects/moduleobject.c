@@ -1056,7 +1056,9 @@ PyLazyImportObject_NewObject(PyObject *from, PyObject *name)
         if (fromlist == NULL) {
             return NULL;
         }
-        PyList_Append(fromlist, name);
+        if (PyList_Append(fromlist, name) < 0) {
+            return NULL;
+        }
         PyObject *new_lazy_from = PyLazyImportModule_NewObject(
             lazy_from->lz_name, lazy_from->lz_globals, lazy_from->lz_locals, fromlist, lazy_from->lz_level);
         Py_DECREF(fromlist);
