@@ -108,8 +108,7 @@ PyObject * PyImport_EagerImportName(
     PyObject *locals,
     PyObject *name,
     PyObject *fromlist,
-    PyObject *level,
-    PyObject *lazy_loaded);
+    PyObject *level);
 PyObject * _PyImport_ImportFrom(
     PyThreadState *tstate,
     PyObject *v,
