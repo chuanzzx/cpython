@@ -856,6 +856,7 @@ extern "C" {
                 INIT_ID(exc_value), \
                 INIT_ID(excepthook), \
                 INIT_ID(exception), \
+                INIT_ID(excluding), \
                 INIT_ID(exp), \
                 INIT_ID(extend), \
                 INIT_ID(factory), \
@@ -2013,6 +2014,8 @@ _PyUnicode_InitStaticStrings(void) {
     string = &_Py_ID(excepthook);
     PyUnicode_InternInPlace(&string);
     string = &_Py_ID(exception);
+    PyUnicode_InternInPlace(&string);
+    string = &_Py_ID(excluding);
     PyUnicode_InternInPlace(&string);
     string = &_Py_ID(exp);
     PyUnicode_InternInPlace(&string);
@@ -5949,6 +5952,10 @@ _PyStaticObjects_CheckRefcnt(void) {
     };
     if (Py_REFCNT((PyObject *)&_Py_ID(exception)) < _PyObject_IMMORTAL_REFCNT) {
         _PyObject_Dump((PyObject *)&_Py_ID(exception));
+        Py_FatalError("immortal object has less refcnt than expected _PyObject_IMMORTAL_REFCNT");
+    };
+    if (Py_REFCNT((PyObject *)&_Py_ID(excluding)) < _PyObject_IMMORTAL_REFCNT) {
+        _PyObject_Dump((PyObject *)&_Py_ID(excluding));
         Py_FatalError("immortal object has less refcnt than expected _PyObject_IMMORTAL_REFCNT");
     };
     if (Py_REFCNT((PyObject *)&_Py_ID(exp)) < _PyObject_IMMORTAL_REFCNT) {

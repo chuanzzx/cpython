@@ -347,6 +347,7 @@ struct _Py_global_strings {
         STRUCT_FOR_ID(exc_value)
         STRUCT_FOR_ID(excepthook)
         STRUCT_FOR_ID(exception)
+        STRUCT_FOR_ID(excluding)
         STRUCT_FOR_ID(exp)
         STRUCT_FOR_ID(extend)
         STRUCT_FOR_ID(factory)
