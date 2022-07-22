@@ -1157,6 +1157,13 @@ lazy_import_clear(PyLazyImport *m)
     return 0;
 }
 
+PyObject *
+PyLazyImport_GetName(PyObject *lazy_import)
+{
+    assert(PyLazyImport_CheckExact(lazy_import));
+    return lazy_import_name((PyLazyImport *)lazy_import);
+}
+
 PyTypeObject PyLazyImport_Type = {
     PyVarObject_HEAD_INIT(&PyType_Type, 0)
     "lazy_import",                              /* tp_name */
