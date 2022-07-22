@@ -4125,7 +4125,7 @@ handle_eval_breaker:
             PyObject *level = TOP();
             PyObject *res;
             res = PyImport_EagerImportName(
-                BUILTINS(), GLOBALS(), LOCALS(), name, fromlist, level, NULL);
+                BUILTINS(), GLOBALS(), LOCALS(), name, fromlist, level);
             Py_DECREF(level);
             Py_DECREF(fromlist);
             SET_TOP(res);
@@ -4145,7 +4145,7 @@ handle_eval_breaker:
                     BUILTINS(), GLOBALS(), LOCALS(), name, fromlist, level);
             } else {
                 res = PyImport_EagerImportName(
-                    BUILTINS(), GLOBALS(), LOCALS(), name, fromlist, level, NULL);
+                    BUILTINS(), GLOBALS(), LOCALS(), name, fromlist, level);
             }
             Py_DECREF(level);
             Py_DECREF(fromlist);
