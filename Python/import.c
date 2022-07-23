@@ -2836,42 +2836,87 @@ _imp_source_hash_impl(PyObject *module, long key, Py_buffer *source)
     return PyBytes_FromStringAndSize(hash.data, sizeof(hash.data));
 }
 
+PyObject *
+PyImport_SetLazyImports(PyObject *enabled, PyObject *excluding)
+{
+    PyInterpreterState *interp = _PyInterpreterState_GET();
+    assert(interp != NULL);
+
+    PyObject *result = PyTuple_Pack(
+        2,
+        interp->lazy_imports == -1 ? Py_None : interp->lazy_imports ? Py_True : Py_False,
+        interp->eager_imports == NULL ? Py_None : interp->eager_imports
+    );
+
+    int _enabled = PyObject_IsTrue(enabled);
+    if (_enabled < 0) {
+        goto error;
+    }
+
+    if (excluding != NULL) {
+        if (excluding == Py_None) {
+            Py_XDECREF(interp->eager_imports);
+            interp->eager_imports = NULL;
+        } else {
+            if (PySequence_Contains(excluding, Py_None) == -1) {
+                goto error;
+            }
+            Py_XDECREF(interp->eager_imports);
+            interp->eager_imports = Py_NewRef(excluding);
+        }
+    }
+
+
+    interp->lazy_imports = enabled == Py_None ? -1 : _enabled;
+
+    return result;
+
+  error:
+    Py_DECREF(result);
+    return NULL;
+}
+
 /*[clinic input]
 _imp.set_lazy_imports
 
-    excluding: object
+    enabled: object = True
+    /
+    excluding: object = NULL
 
 Programmatic API for enabling lazy imports at runtime.
 
-`excluding` is an optional container of module names
-within which all imports will remain eager.
+The optional argument `excluding` can be any container of strings; all imports
+within modules whose full name is present in the container will be eager.
 [clinic start generated code]*/
 
 static PyObject *
-_imp_set_lazy_imports_impl(PyObject *module, PyObject *excluding)
-/*[clinic end generated code: output=e384bf92cca5597d input=84051ca0cfa80ac5]*/
+_imp_set_lazy_imports_impl(PyObject *module, PyObject *enabled,
+                           PyObject *excluding)
+/*[clinic end generated code: output=9a703381a60865b9 input=66e5f89f2883a917]*/
 {
-    if (excluding != Py_None) {
-        if (PySequence_Contains(excluding, Py_None) == -1) {
-            goto error;
-        }
-        Py_INCREF(excluding);
-    }
-    else {
-        excluding = NULL;
-    }
+    return PyImport_SetLazyImports(enabled, excluding);
+}
 
+int
+_PyImport_IsLazyImportsEnabled(int hint)
+{
     PyInterpreterState *interp = _PyInterpreterState_GET();
-    if (interp->eager_imports != NULL) {
-        Py_CLEAR(interp->eager_imports);
+    int lazy_imports = interp->lazy_imports;
+    if (lazy_imports == 0) {
+        return 0;  /* explicitely disabled via set_lazy_imports */
+    } else if (lazy_imports == 1 || _PyInterpreterState_GetConfig(interp)->lazy_imports) {
+        if (hint != -1) {
+            return hint;
+        }
+        return 1;
     }
-    interp->eager_imports = excluding;
+    return 0;
+}
 
-    PyImport_EnableLazyImports();
-    Py_RETURN_NONE;
-
-error:
-    return NULL;
+int
+PyImport_IsLazyImportsEnabled()
+{
+    return _PyImport_IsLazyImportsEnabled(-1);
 }
 
 /*[clinic input]
@@ -3152,26 +3197,6 @@ _PyImport_GetModuleAttrString(const char *modname, const char *attrname)
     Py_DECREF(pattrname);
     Py_DECREF(pmodname);
     return result;
-}
-
-int
-PyImport_IsLazyImportsEnabled()
-{
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-    if (interp->lazy_imports_enabled ||
-        _PyInterpreterState_GetConfig(interp)->lazy_imports)
-    {
-        return 1;
-    }
-    return 0;
-}
-
-void
-PyImport_EnableLazyImports()
-{
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-    assert(interp != NULL);
-    interp->lazy_imports_enabled = 1;
 }
 
 #ifdef __cplusplus
