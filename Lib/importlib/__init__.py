@@ -62,22 +62,9 @@ import warnings
 from ._bootstrap import __import__
 
 
+set_lazy_imports = _imp.set_lazy_imports
 
-def set_lazy_imports(excluding=None):
-    """Programmatic API for enabling lazy imports at runtime.
-
-    The optional argument `excluding` can be any container of strings; all imports
-    within modules whose full name is present in the container will be eager.
-    """
-    _imp.set_lazy_imports(excluding)
-
-
-def is_lazy_imports_enabled():
-    """Check if Lazy Imports is enabled
-
-    Return True if Lazy Imports is enabled, False if not.
-    """
-    return _imp.is_lazy_imports_enabled()
+is_lazy_imports_enabled = _imp.is_lazy_imports_enabled
 
 
 class eager_imports:
