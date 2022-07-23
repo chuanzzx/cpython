@@ -193,7 +193,6 @@ int Py_NoUserSiteDirectory = 0; /* for -s and site.py */
 int Py_UnbufferedStdioFlag = 0; /* Unbuffered binary std{in,out,err} */
 int Py_HashRandomizationFlag = 0; /* for -R and PYTHONHASHSEED */
 int Py_IsolatedFlag = 0; /* for -I, isolate from user's env */
-int Py_LazyImportsFlag = 0; /* For -L, Needed by ceval.c */
 #ifdef MS_WINDOWS
 int Py_LegacyWindowsFSEncodingFlag = 0; /* Uses mbcs instead of utf-8 */
 int Py_LegacyWindowsStdioFlag = 0; /* Uses FileIO instead of WindowsConsoleIO */
@@ -253,7 +252,6 @@ _Py_GetGlobalVariablesAsDict(void)
     SET_ITEM_INT(Py_UnbufferedStdioFlag);
     SET_ITEM_INT(Py_HashRandomizationFlag);
     SET_ITEM_INT(Py_IsolatedFlag);
-    SET_ITEM_INT(Py_LazyImportsFlag);
 
 #ifdef MS_WINDOWS
     SET_ITEM_INT(Py_LegacyWindowsFSEncodingFlag);
@@ -1484,7 +1482,6 @@ config_get_global_vars(PyConfig *config)
     COPY_NOT_FLAG(site_import, Py_NoSiteFlag);
     COPY_NOT_FLAG(write_bytecode, Py_DontWriteBytecodeFlag);
     COPY_NOT_FLAG(user_site_directory, Py_NoUserSiteDirectory);
-    COPY_FLAG(lazy_imports, Py_LazyImportsFlag);
 
 #undef COPY_FLAG
 #undef COPY_NOT_FLAG
@@ -1522,7 +1519,6 @@ config_set_global_vars(const PyConfig *config)
     COPY_NOT_FLAG(site_import, Py_NoSiteFlag);
     COPY_NOT_FLAG(write_bytecode, Py_DontWriteBytecodeFlag);
     COPY_NOT_FLAG(user_site_directory, Py_NoUserSiteDirectory);
-    COPY_FLAG(lazy_imports, Py_LazyImportsFlag);
 
     /* Random or non-zero hash seed */
     Py_HashRandomizationFlag = (config->use_hash_seed == 0 ||
