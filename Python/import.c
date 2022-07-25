@@ -3,6 +3,7 @@
 #include "Python.h"
 
 #include "pycore_call.h"          // _PyObject_FastCallTstate()
+#include "pycore_frame.h"         // _PyInterpreterFrame
 #include "pycore_import.h"        // _PyImport_BootstrapImp()
 #include "pycore_initconfig.h"    // _PyStatus_OK()
 #include "pycore_interp.h"        // _PyInterpreterState_ClearModules()
@@ -2836,10 +2837,21 @@ _imp_source_hash_impl(PyObject *module, long key, Py_buffer *source)
     return PyBytes_FromStringAndSize(hash.data, sizeof(hash.data));
 }
 
+static _PyInterpreterFrame *
+closest_module_frame(_PyInterpreterFrame *frame)
+{
+    while (frame != NULL && frame->f_globals != frame->f_locals) {
+        frame = frame->previous;
+    }
+    return frame;
+}
+
 PyObject *
 PyImport_SetLazyImports(PyObject *enabled, PyObject *excluding)
 {
-    PyInterpreterState *interp = _PyInterpreterState_GET();
+    PyThreadState *tstate = _PyThreadState_GET();
+    assert(tstate != NULL);
+    PyInterpreterState *interp = tstate->interp;
     assert(interp != NULL);
 
     PyObject *result = PyTuple_Pack(
@@ -2868,6 +2880,11 @@ PyImport_SetLazyImports(PyObject *enabled, PyObject *excluding)
 
 
     interp->lazy_imports = enabled == Py_None ? -1 : _enabled;
+
+    _PyInterpreterFrame *frame = closest_module_frame(tstate->cframe->current_frame);
+    if (frame) {
+        frame->lazy_imports = -1;
+    }
 
     return result;
 
@@ -2898,25 +2915,44 @@ _imp_set_lazy_imports_impl(PyObject *module, PyObject *enabled,
 }
 
 int
-_PyImport_IsLazyImportsEnabled(int hint)
+_PyImport_IsLazyImportsEnabled(PyThreadState *tstate)
 {
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-    int lazy_imports = interp->lazy_imports;
-    if (lazy_imports == 0) {
-        return 0;  /* explicitely disabled via set_lazy_imports */
-    } else if (lazy_imports == 1 || _PyInterpreterState_GetConfig(interp)->lazy_imports) {
-        if (hint != -1) {
-            return hint;
-        }
-        return 1;
+    _PyInterpreterFrame *frame = closest_module_frame(tstate->cframe->current_frame);
+    if (frame == NULL) {
+        assert(0);
+        return 0;
     }
-    return 0;
+    int lazy_imports = frame->lazy_imports;
+    if (lazy_imports == -1) {
+        if (PyDict_CheckExact(frame->f_globals)) {
+            int interp_lazy_imports = tstate->interp->lazy_imports;
+            if (interp_lazy_imports == 0) {
+                lazy_imports = 0;  /* explicitely disabled via set_lazy_imports */
+            } else if (interp_lazy_imports == 1 || _PyInterpreterState_GetConfig(tstate->interp)->lazy_imports) {
+                lazy_imports = 1;
+                PyObject *modname  = PyDict_GetItem(frame->f_globals, &_Py_ID(__name__));
+                if (modname != NULL) {
+                    PyObject *filter = tstate->interp->eager_imports;
+                    if (filter != NULL && PySequence_Contains(filter, modname)) {
+                        lazy_imports = 0;  /* Check imports explicitely set as eager */
+                    }
+                }
+            } else {
+                lazy_imports = 0;
+            }
+        } else {
+            lazy_imports = 0;
+        }
+        frame->lazy_imports = lazy_imports;
+    }
+    return lazy_imports;
 }
 
 int
 PyImport_IsLazyImportsEnabled()
 {
-    return _PyImport_IsLazyImportsEnabled(-1);
+    PyThreadState *tstate = _PyThreadState_GET();
+    return _PyImport_IsLazyImportsEnabled(tstate);
 }
 
 /*[clinic input]
