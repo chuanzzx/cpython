@@ -4054,6 +4054,20 @@ PyDict_Contains(PyObject *op, PyObject *key)
     return (ix != DKIX_EMPTY && value != NULL);
 }
 
+/* Return 1 if `name` is a lazy import object in dict `mp`, 0 if not, and -1 on error. */
+int
+PyDict_IsLazyImport(PyObject *mp, PyObject *name)
+{
+    PyObject *value = PyDict_GetItemKeepLazy(mp, name);
+    if (value == NULL) {
+        return -1;
+    }
+    if (PyLazyImport_CheckExact(value)) {
+        return 1;
+    }
+    return 0;
+}
+
 /* Internal version of PyDict_Contains used when the hash value is already known */
 int
 _PyDict_Contains_KnownHash(PyObject *op, PyObject *key, Py_hash_t hash)
