@@ -3,4 +3,4 @@ from . import bar, baz
 
 def test():
     bar
-    print([m for m in sys.modules if m.startswith("test.lazyimports.split_fromlist.")])
+    return set(m for m in sys.modules if m.startswith("test.lazyimports.split_fromlist."))
