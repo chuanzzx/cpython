@@ -78,6 +78,9 @@ def main(regrtest_args):
             buildpython = sysconfig.get_config_var("BUILDPYTHON")
             args.extend(["--python", f"{hostrunner} {buildpython}"])
 
+    if sys.flags.lazy_imports:
+        args.extend(['-L'])
+
     args.extend(regrtest_args)
 
     print(shlex.join(args))
