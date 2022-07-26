@@ -558,6 +558,51 @@ exit:
     return return_value;
 }
 
+PyDoc_STRVAR(_imp_is_lazy_import__doc__,
+"is_lazy_import($module, dict, name, /)\n"
+"--\n"
+"\n"
+"Check if `name` is a lazy import object in `dict`.\n"
+"\n"
+"Returns 1 if `name` in `dict` contains a lazy import object.\n"
+"Returns 0 if `name` in `dict` is not a lazy import object.\n"
+"Returns -1 if `name` doesn\'t exist in `dict`, or an error occurred.");
+
+#define _IMP_IS_LAZY_IMPORT_METHODDEF    \
+    {"is_lazy_import", _PyCFunction_CAST(_imp_is_lazy_import), METH_FASTCALL, _imp_is_lazy_import__doc__},
+
+static PyObject *
+_imp_is_lazy_import_impl(PyObject *module, PyObject *dict, PyObject *name);
+
+static PyObject *
+_imp_is_lazy_import(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
+{
+    PyObject *return_value = NULL;
+    PyObject *dict;
+    PyObject *name;
+
+    if (!_PyArg_CheckPositional("is_lazy_import", nargs, 2, 2)) {
+        goto exit;
+    }
+    if (!PyDict_Check(args[0])) {
+        _PyArg_BadArgument("is_lazy_import", "argument 1", "dict", args[0]);
+        goto exit;
+    }
+    dict = args[0];
+    if (!PyUnicode_Check(args[1])) {
+        _PyArg_BadArgument("is_lazy_import", "argument 2", "str", args[1]);
+        goto exit;
+    }
+    if (PyUnicode_READY(args[1]) == -1) {
+        goto exit;
+    }
+    name = args[1];
+    return_value = _imp_is_lazy_import_impl(module, dict, name);
+
+exit:
+    return return_value;
+}
+
 PyDoc_STRVAR(_imp_set_lazy_imports__doc__,
 "set_lazy_imports($module, enabled=True, /, excluding=<unrepresentable>)\n"
 "--\n"
@@ -677,4 +722,4 @@ exit:
 #ifndef _IMP_EXEC_DYNAMIC_METHODDEF
     #define _IMP_EXEC_DYNAMIC_METHODDEF
 #endif /* !defined(_IMP_EXEC_DYNAMIC_METHODDEF) */
-/*[clinic end generated code: output=9ada069a693d5c44 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=317d9a1407003d89 input=a9049054013a1b77]*/
