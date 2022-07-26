@@ -1,3 +1,3 @@
 from .foo import test
 
-test()
+result = test()

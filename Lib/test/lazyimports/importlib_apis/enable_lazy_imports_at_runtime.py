@@ -4,6 +4,8 @@ from test.lazyimports.importlib_apis.customized_modules import module_is_lazy_im
 assert(not importlib.is_lazy_import(globals(), "module_is_lazy_import_eager"))                  # should be eager
 
 importlib.set_lazy_imports()                                                                    # enable lazy imports
+assert(importlib.is_lazy_imports_enabled())
+
 from test.lazyimports.importlib_apis.customized_modules import module_is_lazy_import_lazy
 assert(importlib.is_lazy_import(globals(), "module_is_lazy_import_lazy"))                       # should be lazy
 
