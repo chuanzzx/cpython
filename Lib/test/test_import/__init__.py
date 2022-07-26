@@ -774,6 +774,7 @@ class RelativeImportTests(unittest.TestCase):
         from .. import relimport
         self.assertTrue(hasattr(relimport, "RelativeImportTests"))
 
+    @unittest.skipIfLazyImportsIsEnabled("Test relevant only when running with lazy imports disabled")
     def test_issue3221(self):
         # Note for mergers: the 'absolute' tests from the 2.x branch
         # are missing in Py3k because implicit relative imports are
@@ -825,6 +826,7 @@ class RelativeImportTests(unittest.TestCase):
             self.assertNotIn('submodule1', sys.modules)
             self.assertNotIn('submodule2', sys.modules)
 
+    @unittest.skipIfLazyImportsIsEnabled("Test relevant only when running with lazy imports disabled")
     def test_import_from_unloaded_package(self):
         with uncache('package2', 'package2.submodule1', 'package2.submodule2'), \
              DirsOnSysPath(os.path.join(os.path.dirname(__file__), 'data')):
@@ -1168,6 +1170,7 @@ class ImportTracebackTests(unittest.TestCase):
             self.fail("ImportError should have been raised")
         self.assert_traceback(tb, [__file__])
 
+    @unittest.skipIfLazyImportsIsEnabled("Lazy Imports has different behavior in nested modules")
     def test_nonexistent_module_nested(self):
         self.create_module("foo", "import nonexistent_xyzzy")
         try:
@@ -1188,6 +1191,7 @@ class ImportTracebackTests(unittest.TestCase):
             self.fail("ZeroDivisionError should have been raised")
         self.assert_traceback(tb, [__file__, 'foo.py'])
 
+    @unittest.skipIfLazyImportsIsEnabled("Lazy Imports has different behavior in nested modules")
     def test_exec_failure_nested(self):
         self.create_module("foo", "import bar")
         self.create_module("bar", "1/0")
@@ -1352,6 +1356,7 @@ class CircularImportTests(unittest.TestCase):
         import test.test_import.data.circular_imports.use
         import test.test_import.data.circular_imports.source
 
+    @unittest.skipIfLazyImportsIsEnabled("Test relevant only when running with lazy imports disabled")
     def test_crossreference2(self):
         with self.assertRaises(AttributeError) as cm:
             import test.test_import.data.circular_imports.source
@@ -1361,6 +1366,7 @@ class CircularImportTests(unittest.TestCase):
         self.assertIn('partially initialized module', errmsg)
         self.assertIn('circular import', errmsg)
 
+    @unittest.skipIfLazyImportsIsEnabled("Test relevant only when running with lazy imports disabled")
     def test_circular_from_import(self):
         with self.assertRaises(ImportError) as cm:
             import test.test_import.data.circular_imports.from_cycle1
@@ -1371,6 +1377,7 @@ class CircularImportTests(unittest.TestCase):
             str(cm.exception),
         )
 
+    @unittest.skipIfLazyImportsIsEnabled("Test relevant only when running with lazy imports disabled")
     def test_absolute_circular_submodule(self):
         with self.assertRaises(AttributeError) as cm:
             import test.test_import.data.circular_imports.subpkg2.parent
