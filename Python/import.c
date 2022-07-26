@@ -2124,16 +2124,6 @@ PyImport_LoadLazyImport(PyObject *lazy_import)
         if (obj != NULL) {
             assert(!PyLazyImport_CheckExact(obj));
             lz->lz_obj = obj;
-        } else {
-            PyThreadState *tstate = _PyThreadState_GET();
-            // only preserve the most recent (innermost) LazyImportError
-            if (tstate->curexc_type && tstate->curexc_type != PyExc_LazyImportError) {
-                assert(lz->lz_filename);
-                _PyErr_FormatFromCauseTstate(
-                    tstate, PyExc_LazyImportError,
-                    "Error occurred when loading a lazy import: original import was at file %S, line %d",
-                    lz->lz_filename, lz->lz_lineno);
-            }
         }
     }
     Py_XINCREF(obj);
