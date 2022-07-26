@@ -2884,6 +2884,37 @@ PyImport_SetLazyImports(PyObject *enabled, PyObject *excluding)
 }
 
 /*[clinic input]
+_imp.is_lazy_import
+
+    dict: object(subclass_of='&PyDict_Type')
+    name: unicode
+    /
+
+Check if `name` is a lazy import object in `dict`.
+
+Returns 1 if `name` in `dict` contains a lazy import object.
+Returns 0 if `name` in `dict` is not a lazy import object.
+Returns -1 if `name` doesn't exist in `dict`, or an error occurred.
+[clinic start generated code]*/
+
+static PyObject *
+_imp_is_lazy_import_impl(PyObject *module, PyObject *dict, PyObject *name)
+/*[clinic end generated code: output=bd1970ebdd10dc24 input=59203c03c8a8629c]*/
+{
+    if (PyDict_CheckExact(dict)) {
+        int res = PyDict_IsLazyImport(dict, name);
+        if (res == -1) {
+            PyErr_SetObject(PyExc_KeyError, name);
+            return NULL;
+        }
+        if (res == 1) {
+            Py_RETURN_TRUE;
+        }
+    }
+    Py_RETURN_FALSE;
+}
+
+/*[clinic input]
 _imp.set_lazy_imports
 
     enabled: object = True
@@ -3035,6 +3066,7 @@ static PyMethodDef imp_methods[] = {
     _IMP_EXEC_BUILTIN_METHODDEF
     _IMP__FIX_CO_FILENAME_METHODDEF
     _IMP_SOURCE_HASH_METHODDEF
+    _IMP_IS_LAZY_IMPORT_METHODDEF
     _IMP_SET_LAZY_IMPORTS_METHODDEF
     _IMP_IS_LAZY_IMPORTS_ENABLED_METHODDEF
     _IMP__MAYBE_SET_SUBMODULE_ATTRIBUTE_METHODDEF
