@@ -41,6 +41,8 @@ def main(regrtest_args):
         args.extend(['-j', '0'])  # Use all CPU cores
     if not any(is_resource_use_flag(arg) for arg in regrtest_args):
         args.extend(['-u', 'all,-largefile,-audio,-gui'])
+    if sys.flags.lazy_imports:
+        args.extend(['-L'])
     args.extend(regrtest_args)
     print(' '.join(args))
     if sys.platform == 'win32':
