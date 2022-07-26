@@ -63,9 +63,8 @@ from ._bootstrap import __import__
 
 
 set_lazy_imports = _imp.set_lazy_imports
-
 is_lazy_imports_enabled = _imp.is_lazy_imports_enabled
-
+is_lazy_import = _imp.is_lazy_import
 
 class eager_imports:
     """A context manager that forces imports executed within to be
