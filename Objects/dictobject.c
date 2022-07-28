@@ -2358,7 +2358,10 @@ PyDict_Next(PyObject *op, Py_ssize_t *ppos, PyObject **pkey, PyObject **pvalue)
     }
     if (pvalue != NULL) {
         if (*ppos == 0) {
-            PyDict_ResolveLazyImports(op);
+            if (PyDict_ResolveLazyImports(op) != 0) {
+                assert(0);
+                return 0;
+            }
         }
         if (_PyDict_HasLazyImports(op)) {
             assert(0);
@@ -2952,7 +2955,10 @@ top:
             return -1;
         }
         key = PyTuple_GET_ITEM(item, 0);
-        PyDict_SetItem((PyObject *)mp, key, resolved_value);
+        if (PyDict_SetItem((PyObject *)mp, key, resolved_value) < 0) {
+            Py_DECREF(resolved_value);
+            return -1;
+        }
         Py_DECREF(resolved_value);
     }
     Py_DECREF(v);
@@ -2972,7 +2978,14 @@ top:
         mp->ma_keys->dk_lazy_imports = 0;
     }
     ASSERT_CONSISTENT(mp);
-    return n;
+    if (n) {
+        if (!PyErr_Occurred()) {
+            PyErr_Format(PyExc_ImportError,
+                "Unable to resolve all lazy imports");
+        }
+        return -n - 1;
+    }
+    return 0;
 }
 
 /*[clinic input]
