@@ -20,15 +20,15 @@ class TestLazyImportsSanity(unittest.TestCase):
 
 class LazyImportsTest(unittest.TestCase):
     def test_dict_update(self):
-        with importlib.lazy_imports(True):
+        with importlib._lazy_imports(True):
             mod = import_fresh_module("test.lazyimports.dict_update")
             self.assertEqual(mod.result, warnings)
 
     def test_deferred_resolve_failure(self):
-        with importlib.lazy_imports(True):
+        with importlib._lazy_imports(True):
             import_fresh_module("test.lazyimports.deferred_resolve_failure")
 
-        with importlib.lazy_imports(False):
+        with importlib._lazy_imports(False):
             with self.assertRaises(ImportError) as cm:
                 import_fresh_module("test.lazyimports.deferred_resolve_failure")
             ex = cm.exception
@@ -36,28 +36,28 @@ class LazyImportsTest(unittest.TestCase):
 
     def test_split_fromlist(self):
         expected_result = {'test.lazyimports.split_fromlist.foo', 'test.lazyimports.split_fromlist.foo.bar'}
-        with importlib.lazy_imports(True):
+        with importlib._lazy_imports(True):
             mod = import_fresh_module("test.lazyimports.split_fromlist")
             self.assertEqual(mod.result, expected_result)
 
     def test_enable_lazy_imports_at_runtime(self):
-        with importlib.lazy_imports(False):
+        with importlib._lazy_imports(False):
             import_fresh_module("test.lazyimports.importlib_apis.enable_lazy_imports_at_runtime")
 
     def test_attribute_side_effect(self):
-        with importlib.lazy_imports(False):
+        with importlib._lazy_imports(False):
             import_fresh_module("test.lazyimports.attr_side_effect")
 
-        with importlib.lazy_imports(True):
+        with importlib._lazy_imports(True):
             import_fresh_module("test.lazyimports.attr_side_effect")
 
     def test_set_lazy_imports_excluding(self):
-        with importlib.lazy_imports(False):
+        with importlib._lazy_imports(False):
             import_fresh_module("test.lazyimports.importlib_apis.set_lazy_imports_excluding_list")
             import_fresh_module("test.lazyimports.importlib_apis.set_lazy_imports_excluding_cb")
             import_fresh_module("test.lazyimports.importlib_apis.set_lazy_imports_excluding_cb_list")
 
-        with importlib.lazy_imports(True):
+        with importlib._lazy_imports(True):
             import_fresh_module("test.lazyimports.importlib_apis.set_lazy_imports_excluding_list")
             import_fresh_module("test.lazyimports.importlib_apis.set_lazy_imports_excluding_cb")
             import_fresh_module("test.lazyimports.importlib_apis.set_lazy_imports_excluding_cb_list")
