@@ -1930,12 +1930,10 @@ PyImport_LazyImportName(PyObject *builtins, PyObject *globals, PyObject *locals,
                     if (PyErr_Occurred()) {
                         goto error;
                     }
-                } else {
-                    if (PyLazyImport_CheckExact(attr)) {
-                        assert(lazy_module_attr->lz_next == NULL);
-                        Py_INCREF(attr);
-                        lazy_module_attr->lz_next = attr;
-                    }
+                } else if (PyLazyImport_CheckExact(attr)) {
+                    assert(lazy_module_attr->lz_next == NULL);
+                    Py_INCREF(attr);
+                    lazy_module_attr->lz_next = attr;
                 }
                 if (PyDict_SetItem(parent_dict, child, (PyObject *)lazy_module_attr) < 0) {
                     goto error;
