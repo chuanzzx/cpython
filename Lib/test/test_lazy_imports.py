@@ -62,6 +62,12 @@ class LazyImportsTest(unittest.TestCase):
             import_fresh_module("test.lazyimports.importlib_apis.set_lazy_imports_excluding_cb")
             import_fresh_module("test.lazyimports.importlib_apis.set_lazy_imports_excluding_cb_list")
 
+    def test_dict_changes_when_loading(self):
+        with importlib._lazy_imports(False):
+            import_fresh_module("test.lazyimports.check_dict_changes_when_loading")
+
+        with importlib._lazy_imports(True):
+            import_fresh_module("test.lazyimports.check_dict_changes_when_loading")
 
 if __name__ == '__main__':
     unittest.main()
