@@ -69,5 +69,13 @@ class LazyImportsTest(unittest.TestCase):
         with importlib._lazy_imports(True):
             import_fresh_module("test.lazyimports.check_dict_changes_when_loading")
 
+    def test_dict(self):
+        with importlib._lazy_imports(True):
+            import_fresh_module("test.lazyimports.dict_tests")
+
+    def test_from_import_star(self):
+        with importlib._lazy_imports(True):
+            import_fresh_module("test.lazyimports.from_import_star")
+
 if __name__ == '__main__':
     unittest.main()
