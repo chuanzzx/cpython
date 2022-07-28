@@ -3020,9 +3020,10 @@ _imp__maybe_set_submodule_attribute_impl(PyObject *module,
         if (lazy_loaded_contains_parent(name, parent_module)) {
             PyObject *attr = PyDict_GetItemKeepLazy(parent_dict, child);
             if (attr == NULL) {
-                return NULL;
-            }
-            if (PyLazyImport_CheckExact(attr)) {
+                if (PyErr_Occurred()) {
+                    return NULL;
+                }
+            } else if (PyLazyImport_CheckExact(attr)) {
                 PyObject *attr_name = PyLazyImport_GetName(attr);
                 if (PyUnicode_Compare(attr_name, name) == 0) {
                     if (PyDict_SetItem(parent_dict, child, child_module) < 0) {
