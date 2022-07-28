@@ -2837,16 +2837,20 @@ closest_module_frame(_PyInterpreterFrame *frame)
 PyObject *
 PyImport_SetLazyImports(PyObject *enabled, PyObject *excluding)
 {
+    PyObject *result = NULL;
     PyThreadState *tstate = _PyThreadState_GET();
     assert(tstate != NULL);
     PyInterpreterState *interp = tstate->interp;
     assert(interp != NULL);
 
-    PyObject *result = PyTuple_Pack(
+    result = PyTuple_Pack(
         2,
         interp->lazy_imports == -1 ? Py_None : interp->lazy_imports ? Py_True : Py_False,
         interp->eager_imports == NULL ? Py_None : interp->eager_imports
     );
+    if (result == NULL) {
+        goto error;
+    }
 
     int _enabled = PyObject_IsTrue(enabled);
     if (_enabled < 0) {
@@ -2866,7 +2870,6 @@ PyImport_SetLazyImports(PyObject *enabled, PyObject *excluding)
         }
     }
 
-
     interp->lazy_imports = enabled == Py_None ? -1 : _enabled;
 
     _PyInterpreterFrame *frame = closest_module_frame(tstate->cframe->current_frame);
@@ -2877,7 +2880,42 @@ PyImport_SetLazyImports(PyObject *enabled, PyObject *excluding)
     return result;
 
   error:
-    Py_DECREF(result);
+    Py_XDECREF(result);
+    return NULL;
+}
+
+PyObject *
+PyImport_SetLazyImportsShallow(PyObject *enabled)
+{
+    PyObject *result = NULL;
+    PyThreadState *tstate = _PyThreadState_GET();
+    assert(tstate != NULL);
+
+    _PyInterpreterFrame *frame = closest_module_frame(tstate->cframe->current_frame);
+    if (frame == NULL) {
+        assert(0);
+        goto error;
+    }
+
+    result = PyTuple_Pack(
+        1,
+        frame->lazy_imports == -1 ? Py_None : frame->lazy_imports ? Py_True : Py_False
+    );
+    if (result == NULL) {
+        goto error;
+    }
+
+    int _enabled = PyObject_IsTrue(enabled);
+    if (_enabled < 0) {
+        goto error;
+    }
+
+    frame->lazy_imports = enabled == Py_None ? -1 : _enabled;
+
+    return result;
+
+  error:
+    Py_XDECREF(result);
     return NULL;
 }
 
@@ -2913,7 +2951,7 @@ _imp_is_lazy_import_impl(PyObject *module, PyObject *dict, PyObject *name)
 }
 
 /*[clinic input]
-_imp.set_lazy_imports
+_imp._set_lazy_imports
 
     enabled: object = True
     /
@@ -2926,11 +2964,27 @@ within modules whose full name is present in the container will be eager.
 [clinic start generated code]*/
 
 static PyObject *
-_imp_set_lazy_imports_impl(PyObject *module, PyObject *enabled,
-                           PyObject *excluding)
-/*[clinic end generated code: output=9a703381a60865b9 input=66e5f89f2883a917]*/
+_imp__set_lazy_imports_impl(PyObject *module, PyObject *enabled,
+                            PyObject *excluding)
+/*[clinic end generated code: output=bb6e4196f8cf4569 input=bfae9176e3b98393]*/
 {
     return PyImport_SetLazyImports(enabled, excluding);
+}
+
+/*[clinic input]
+_imp._set_lazy_imports_shallow
+
+    enabled: object = True
+    /
+
+Enables or disables.
+[clinic start generated code]*/
+
+static PyObject *
+_imp__set_lazy_imports_shallow_impl(PyObject *module, PyObject *enabled)
+/*[clinic end generated code: output=40538ef06c163a8f input=4c6ed88864b4238c]*/
+{
+    return PyImport_SetLazyImportsShallow(enabled);
 }
 
 int
@@ -3066,7 +3120,8 @@ static PyMethodDef imp_methods[] = {
     _IMP__FIX_CO_FILENAME_METHODDEF
     _IMP_SOURCE_HASH_METHODDEF
     _IMP_IS_LAZY_IMPORT_METHODDEF
-    _IMP_SET_LAZY_IMPORTS_METHODDEF
+    _IMP__SET_LAZY_IMPORTS_METHODDEF
+    _IMP__SET_LAZY_IMPORTS_SHALLOW_METHODDEF
     _IMP_IS_LAZY_IMPORTS_ENABLED_METHODDEF
     _IMP__MAYBE_SET_SUBMODULE_ATTRIBUTE_METHODDEF
     {NULL, NULL}  /* sentinel */

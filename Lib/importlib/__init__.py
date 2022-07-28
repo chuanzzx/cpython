@@ -62,9 +62,17 @@ import warnings
 from ._bootstrap import __import__
 
 
-set_lazy_imports = _imp.set_lazy_imports
 is_lazy_imports_enabled = _imp.is_lazy_imports_enabled
 is_lazy_import = _imp.is_lazy_import
+
+
+def set_lazy_imports(enable = True, *, excluding = None):
+    _imp._set_lazy_imports(enable, excluding=excluding)
+
+
+def enable_lazy_imports_in_module(enable = True):
+    _imp._set_lazy_imports_shallow(enabled)
+
 
 class eager_imports:
     """A context manager that forces imports executed within to be
@@ -80,17 +88,17 @@ class eager_imports:
         pass
 
 
-class lazy_imports:
-    def __init__(self, *args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
-        self.previous_state = None
+class _lazy_imports:
+    def __init__(self, enable = True, *, excluding = None):
+        self.enable = enable
+        self.excluding = excluding
+        self.previously = None
 
     def __enter__(self):
-        self.previous_state = set_lazy_imports(*self.args, **self.kwargs)
+        self.previously = _imp._set_lazy_imports(self.enable, excluding=self.excluding)
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        set_lazy_imports(*self.previous_state)
+        _imp._set_lazy_imports(*self.previously)
 
 
 def invalidate_caches():
