@@ -2895,7 +2895,7 @@ PyDict_ResolveLazyImports(PyObject *dict)
     PyObject *item, *key, *value;
     PyObject *resolved_value;
     Py_ssize_t i, n = 0;
-    Py_ssize_t nentries;
+    uint64_t version_tag;
 
     assert(PyDict_Check(dict));
     PyDictObject *mp = (PyDictObject *)dict;
@@ -2904,7 +2904,7 @@ PyDict_ResolveLazyImports(PyObject *dict)
     }
 
 top:
-    nentries = mp->ma_keys->dk_nentries;
+    version_tag = mp->ma_version_tag;
 
     /* try importing as many deferredd objects as possible */
     v = dict_lazy_items_only(mp);
@@ -2963,7 +2963,7 @@ top:
     }
     Py_DECREF(v);
 
-    if (nentries != mp->ma_keys->dk_nentries) {
+    if (version_tag != mp->ma_version_tag) {
         /* The dict has mutated, try again */
         goto top;
     }
