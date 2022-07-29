@@ -193,6 +193,7 @@ int Py_NoUserSiteDirectory = 0; /* for -s and site.py */
 int Py_UnbufferedStdioFlag = 0; /* Unbuffered binary std{in,out,err} */
 int Py_HashRandomizationFlag = 0; /* for -R and PYTHONHASHSEED */
 int Py_IsolatedFlag = 0; /* for -I, isolate from user's env */
+int Py_LazyImportsFlag = 0;
 #ifdef MS_WINDOWS
 int Py_LegacyWindowsFSEncodingFlag = 0; /* Uses mbcs instead of utf-8 */
 int Py_LegacyWindowsStdioFlag = 0; /* Uses FileIO instead of WindowsConsoleIO */
@@ -254,6 +255,7 @@ _Py_COMP_DIAG_IGNORE_DEPR_DECLS
     SET_ITEM_INT(Py_UnbufferedStdioFlag);
     SET_ITEM_INT(Py_HashRandomizationFlag);
     SET_ITEM_INT(Py_IsolatedFlag);
+    SET_ITEM_INT(Py_LazyImportsFlag);
 
 #ifdef MS_WINDOWS
     SET_ITEM_INT(Py_LegacyWindowsFSEncodingFlag);
@@ -826,6 +828,7 @@ PyConfig_InitIsolatedConfig(PyConfig *config)
 
     config->_config_init = (int)_PyConfig_INIT_ISOLATED;
     config->isolated = 1;
+    config->lazy_imports = 0;
     config->use_environment = 0;
     config->user_site_directory = 0;
     config->dev_mode = 0;
@@ -1476,6 +1479,7 @@ _Py_COMP_DIAG_IGNORE_DEPR_DECLS
         }
 
     COPY_FLAG(isolated, Py_IsolatedFlag);
+    COPY_FLAG(lazy_imports, Py_LazyImportsFlag);
     COPY_NOT_FLAG(use_environment, Py_IgnoreEnvironmentFlag);
     COPY_FLAG(bytes_warning, Py_BytesWarningFlag);
     COPY_FLAG(inspect, Py_InspectFlag);
@@ -1516,6 +1520,7 @@ _Py_COMP_DIAG_IGNORE_DEPR_DECLS
         }
 
     COPY_FLAG(isolated, Py_IsolatedFlag);
+    COPY_FLAG(lazy_imports, Py_LazyImportsFlag);
     COPY_NOT_FLAG(use_environment, Py_IgnoreEnvironmentFlag);
     COPY_FLAG(bytes_warning, Py_BytesWarningFlag);
     COPY_FLAG(inspect, Py_InspectFlag);
