@@ -3098,27 +3098,33 @@ _imp__maybe_set_submodule_attribute_impl(PyObject *module,
             PyObject *attr = PyDict_GetItemKeepLazy(parent_dict, child);
             if (attr == NULL) {
                 if (PyErr_Occurred()) {
+                    Py_DECREF(parent_dict);
                     return NULL;
                 }
             } else if (PyLazyImport_CheckExact(attr)) {
                 PyObject *attr_name = PyLazyImport_GetName(attr);
                 if (PyUnicode_Compare(attr_name, name) == 0) {
                     if (PyDict_SetItem(parent_dict, child, child_module) < 0) {
+                        Py_DECREF(parent_dict);
+                        Py_DECREF(attr_name);
                         return NULL;
                     }
                 }
+                Py_DECREF(attr_name);
             }
         } else {
             if (PyDict_SetItem(parent_dict, child, child_module) < 0) {
+                Py_DECREF(parent_dict);
                 return NULL;
             }
         }
     } else {
         if (PyObject_SetAttr(parent_module, child, child_module) < 0) {
+            Py_DECREF(parent_dict);
             return NULL;
         }
     }
-
+    Py_DECREF(parent_dict);
     Py_RETURN_NONE;
 }
 
