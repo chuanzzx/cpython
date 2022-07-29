@@ -100,7 +100,7 @@ typedef struct {
     PyObject *lz_level;
     PyObject *lz_obj;
     PyObject *lz_next;
-    int lz_resolving;
+    PyObject *lz_resolving;
 } PyLazyImport;
 
 // Internal C API

@@ -2082,32 +2082,57 @@ _imp_load_lazy_import_impl(PyLazyImport *lazy_import)
         }
     }
   error:
-    lazy_import->lz_resolving = 0;
     return obj;
 }
 
 PyObject *
 PyImport_LoadLazyImport(PyObject *lazy_import)
 {
+    PyObject *thread_id = NULL;
     assert(lazy_import != NULL);
     assert(PyLazyImport_CheckExact(lazy_import));
     Py_INCREF(lazy_import);
     PyLazyImport *lz = (PyLazyImport *)lazy_import;
     PyObject *obj = lz->lz_obj;
     if (obj == NULL) {
-        if (lz->lz_resolving) {
+        thread_id = PyLong_FromUnsignedLong(PyThread_get_thread_ident());
+        if (thread_id == NULL) {
+            goto error;
+        }
+        int resolving = 0;
+        if (lz->lz_resolving != NULL) {
+            resolving = PySet_Contains(lz->lz_resolving, thread_id);
+            if (resolving < 0) {
+                return NULL;
+            }
+        }
+        if (resolving) {
             PyErr_Clear();
         } else {
-            lz->lz_resolving = 1;
+            if (lz->lz_resolving == NULL) {
+                lz->lz_resolving = PySet_New(NULL);
+                if (lz->lz_resolving == NULL) {
+                    goto error;
+                }
+            }
+            if (PySet_Add(lz->lz_resolving, thread_id) < 0) {
+                goto error;
+            }
             obj = _imp_load_lazy_import_impl(lz);
-            lz->lz_resolving = 0;
+            if (PySet_Discard(lz->lz_resolving, thread_id) < 0) {
+                Py_DECREF(obj);
+                obj = NULL;
+                goto error;
+            }
         }
         if (obj != NULL) {
             assert(!PyLazyImport_CheckExact(obj));
             lz->lz_obj = obj;
         }
     }
+  error:
     Py_XINCREF(obj);
+    Py_XDECREF(thread_id);
     Py_DECREF(lazy_import);
     return obj;
 }
