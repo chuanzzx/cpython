@@ -1825,7 +1825,6 @@ handle_eval_breaker:
 
         TARGET(STORE_FAST) {
             PyObject *value = POP();
-            assert(!PyLazyImport_CheckExact(value));
             SETLOCAL(oparg, value);
             DISPATCH();
         }
@@ -3118,16 +3117,18 @@ handle_eval_breaker:
             uint32_t version = read_u32(cache->module_keys_version);
             DEOPT_IF(dict->ma_keys->dk_version != version, LOAD_GLOBAL);
             assert(DK_IS_UNICODE(dict->ma_keys));
-            PyDictUnicodeEntry *entries = DK_UNICODE_ENTRIES(dict->ma_keys);
-            PyObject *res = entries[cache->index].me_value;
+            PyDictUnicodeEntry *ep = DK_UNICODE_ENTRIES(dict->ma_keys) + cache->index;
+            PyObject *res = ep->me_value;
             DEOPT_IF(res == NULL, LOAD_GLOBAL);
             if (PyLazyImport_CheckExact(res)) {
                 assert(dict->ma_keys->dk_lazy_imports);
+                uint64_t version_tag = dict->ma_version_tag;
                 PyObject *resolved = PyImport_LoadLazyImport(res);
                 DEOPT_IF(resolved == NULL, LOAD_GLOBAL);
+                DEOPT_IF(dict->ma_version_tag != version_tag, LOAD_GLOBAL);
                 DEOPT_IF(dict->ma_keys->dk_version != version, LOAD_GLOBAL);
                 Py_DECREF(res);
-                entries[cache->index].me_value = resolved;
+                ep->me_value = resolved;
                 res = resolved;
             }
             int push_null = oparg & 1;
@@ -3152,16 +3153,19 @@ handle_eval_breaker:
             DEOPT_IF(mdict->ma_keys->dk_version != mod_version, LOAD_GLOBAL);
             DEOPT_IF(bdict->ma_keys->dk_version != bltn_version, LOAD_GLOBAL);
             assert(DK_IS_UNICODE(bdict->ma_keys));
-            PyDictUnicodeEntry *entries = DK_UNICODE_ENTRIES(bdict->ma_keys);
-            PyObject *res = entries[cache->index].me_value;
+            PyDictUnicodeEntry *ep = DK_UNICODE_ENTRIES(bdict->ma_keys) + cache->index;
+            PyObject *res = ep->me_value;
             DEOPT_IF(res == NULL, LOAD_GLOBAL);
             if (PyLazyImport_CheckExact(res)) {
                 assert(bdict->ma_keys->dk_lazy_imports);
+                uint64_t version_tag = bdict->ma_version_tag;
                 PyObject *resolved = PyImport_LoadLazyImport(res);
                 DEOPT_IF(resolved == NULL, LOAD_GLOBAL);
+                DEOPT_IF(bdict->ma_version_tag != version_tag, LOAD_GLOBAL);
+                DEOPT_IF(mdict->ma_keys->dk_version != mod_version, LOAD_GLOBAL);
                 DEOPT_IF(bdict->ma_keys->dk_version != bltn_version, LOAD_GLOBAL);
                 Py_DECREF(res);
-                entries[cache->index].me_value = resolved;
+                ep->me_value = resolved;
                 res = resolved;
             }
             int push_null = oparg & 1;
@@ -3628,6 +3632,18 @@ handle_eval_breaker:
             PyDictUnicodeEntry *ep = DK_UNICODE_ENTRIES(dict->ma_keys) + cache->index;
             res = ep->me_value;
             DEOPT_IF(res == NULL, LOAD_ATTR);
+            if (PyLazyImport_CheckExact(res)) {
+                assert(dict->ma_keys->dk_lazy_imports);
+                uint64_t version_tag = dict->ma_version_tag;
+                PyObject *resolved = PyImport_LoadLazyImport(res);
+                DEOPT_IF(resolved == NULL, LOAD_ATTR);
+                DEOPT_IF(dict->ma_version_tag != version_tag, LOAD_ATTR);
+                DEOPT_IF(dict->ma_keys->dk_version != read_u32(cache->version),
+                    LOAD_ATTR);
+                Py_DECREF(res);
+                ep->me_value = resolved;
+                res = resolved;
+            }
             STAT_INC(LOAD_ATTR, hit);
             Py_INCREF(res);
             SET_TOP(NULL);
@@ -3660,13 +3676,34 @@ handle_eval_breaker:
                 PyDictUnicodeEntry *ep = DK_UNICODE_ENTRIES(dict->ma_keys) + hint;
                 DEOPT_IF(ep->me_key != name, LOAD_ATTR);
                 res = ep->me_value;
+                DEOPT_IF(res == NULL, LOAD_ATTR);
+                if (PyLazyImport_CheckExact(res)) {
+                    assert(dict->ma_keys->dk_lazy_imports);
+                    uint64_t version_tag = dict->ma_version_tag;
+                    PyObject *resolved = PyImport_LoadLazyImport(res);
+                    DEOPT_IF(resolved == NULL, LOAD_ATTR);
+                    DEOPT_IF(dict->ma_version_tag != version_tag, LOAD_ATTR);
+                    Py_DECREF(res);
+                    ep->me_value = resolved;
+                    res = resolved;
+                }
             }
             else {
                 PyDictKeyEntry *ep = DK_ENTRIES(dict->ma_keys) + hint;
                 DEOPT_IF(ep->me_key != name, LOAD_ATTR);
                 res = ep->me_value;
+                DEOPT_IF(res == NULL, LOAD_ATTR);
+                if (PyLazyImport_CheckExact(res)) {
+                    assert(dict->ma_keys->dk_lazy_imports);
+                    uint64_t version_tag = dict->ma_version_tag;
+                    PyObject *resolved = PyImport_LoadLazyImport(res);
+                    DEOPT_IF(resolved == NULL, LOAD_ATTR);
+                    DEOPT_IF(dict->ma_version_tag != version_tag, LOAD_ATTR);
+                    Py_DECREF(res);
+                    ep->me_value = resolved;
+                    res = resolved;
+                }
             }
-            DEOPT_IF(res == NULL, LOAD_ATTR);
             STAT_INC(LOAD_ATTR, hit);
             Py_INCREF(res);
             SET_TOP(NULL);
