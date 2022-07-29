@@ -1152,6 +1152,7 @@ def _find_and_load_unlocked(name, import_):
                 parent_spec._uninitialized_submodules.pop()
     if parent:
         # Set the module as an attribute on its parent.
+        parent_module = sys.modules[parent]
         try:
             _imp._maybe_set_submodule_attribute(parent_module, child, module, name)
         except AttributeError:
