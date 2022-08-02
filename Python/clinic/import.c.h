@@ -756,25 +756,25 @@ exit:
     return return_value;
 }
 
-PyDoc_STRVAR(_imp__set_lazy_imports_shallow__doc__,
-"_set_lazy_imports_shallow($module, enabled=True, /)\n"
+PyDoc_STRVAR(_imp__set_lazy_imports_in_module__doc__,
+"_set_lazy_imports_in_module($module, enabled=True, /)\n"
 "--\n"
 "\n"
 "Enables or disables.");
 
-#define _IMP__SET_LAZY_IMPORTS_SHALLOW_METHODDEF    \
-    {"_set_lazy_imports_shallow", _PyCFunction_CAST(_imp__set_lazy_imports_shallow), METH_FASTCALL, _imp__set_lazy_imports_shallow__doc__},
+#define _IMP__SET_LAZY_IMPORTS_IN_MODULE_METHODDEF    \
+    {"_set_lazy_imports_in_module", _PyCFunction_CAST(_imp__set_lazy_imports_in_module), METH_FASTCALL, _imp__set_lazy_imports_in_module__doc__},
 
 static PyObject *
-_imp__set_lazy_imports_shallow_impl(PyObject *module, PyObject *enabled);
+_imp__set_lazy_imports_in_module_impl(PyObject *module, PyObject *enabled);
 
 static PyObject *
-_imp__set_lazy_imports_shallow(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
+_imp__set_lazy_imports_in_module(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
 {
     PyObject *return_value = NULL;
     PyObject *enabled = Py_True;
 
-    if (!_PyArg_CheckPositional("_set_lazy_imports_shallow", nargs, 0, 1)) {
+    if (!_PyArg_CheckPositional("_set_lazy_imports_in_module", nargs, 0, 1)) {
         goto exit;
     }
     if (nargs < 1) {
@@ -782,7 +782,7 @@ _imp__set_lazy_imports_shallow(PyObject *module, PyObject *const *args, Py_ssize
     }
     enabled = args[0];
 skip_optional:
-    return_value = _imp__set_lazy_imports_shallow_impl(module, enabled);
+    return_value = _imp__set_lazy_imports_in_module_impl(module, enabled);
 
 exit:
     return return_value;
@@ -859,4 +859,4 @@ exit:
 #ifndef _IMP_EXEC_DYNAMIC_METHODDEF
     #define _IMP_EXEC_DYNAMIC_METHODDEF
 #endif /* !defined(_IMP_EXEC_DYNAMIC_METHODDEF) */
-/*[clinic end generated code: output=ba22f24bc879bb65 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=e96c66df059da1a7 input=a9049054013a1b77]*/

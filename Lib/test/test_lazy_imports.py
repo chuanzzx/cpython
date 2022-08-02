@@ -103,6 +103,13 @@ class LazyImportsTest(unittest.TestCase):
         with importlib._lazy_imports(True):
             import_fresh_module("test.lazyimports.reach_max_recursion")
 
+    def test_immediate_set_lazy_import(self):
+        with importlib._lazy_imports(True):
+            import_fresh_module("test.lazyimports.immediate_set_lazy_import")
+
+        with importlib._lazy_imports(True):
+            import_fresh_module("test.lazyimports.immediate_set_lazy_import_global")
+
 
 if __name__ == '__main__':
     unittest.main()
