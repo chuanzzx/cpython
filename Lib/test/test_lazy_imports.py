@@ -24,6 +24,16 @@ class LazyImportsTest(unittest.TestCase):
             mod = import_fresh_module("test.lazyimports.dict_update")
             self.assertEqual(mod.result, warnings)
 
+    def test_circular_import(self):
+        with importlib._lazy_imports(True):
+            import_fresh_module("test.lazyimports.circular_import")
+
+        with importlib._lazy_imports(False):
+            with self.assertRaises(ImportError) as cm:
+                import_fresh_module("test.lazyimports.circular_import")
+            ex = cm.exception
+            self.assertIn("(most likely due to a circular import)", repr(ex))
+
     def test_deferred_resolve_failure(self):
         with importlib._lazy_imports(True):
             import_fresh_module("test.lazyimports.deferred_resolve_failure")
