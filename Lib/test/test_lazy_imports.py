@@ -77,5 +77,24 @@ class LazyImportsTest(unittest.TestCase):
         with importlib._lazy_imports(True):
             import_fresh_module("test.lazyimports.from_import_star")
 
+    def test_is_lazy_imports_enabled(self):
+        with importlib._lazy_imports(True):
+            import_fresh_module("test.lazyimports.is_lazy_imports_enabled")
+
+        with importlib._lazy_imports(False):
+            import_fresh_module("test.lazyimports.is_lazy_imports_enabled")
+
+    def test_disable_lazy_imports(self):
+        with importlib._lazy_imports(True):
+            import_fresh_module("test.lazyimports.disable_lazy_imports")
+
+    def test_import_module_has_same_name_var_as_submodule_name(self):
+        with importlib._lazy_imports(True):
+            import_fresh_module("test.lazyimports.import_same_name_variable")
+
+    def test_dict_delete(self):
+        with importlib._lazy_imports(True):
+            import_fresh_module("test.lazyimports.dict_delete")
+
 if __name__ == '__main__':
     unittest.main()
