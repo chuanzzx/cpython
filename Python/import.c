@@ -7,6 +7,7 @@
 #include "pycore_import.h"        // _PyImport_BootstrapImp()
 #include "pycore_initconfig.h"    // _PyStatus_OK()
 #include "pycore_interp.h"        // _PyInterpreterState_ClearModules()
+#include "pycore_moduleobject.h"  // PyModuleObject
 #include "pycore_namespace.h"     // _PyNamespace_Type
 #include "pycore_pyerrors.h"      // _PyErr_SetString()
 #include "pycore_pyhash.h"        // _Py_KeyedHash()
@@ -1754,58 +1755,37 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
 static int
 lazy_loaded_contains_parent(PyObject *name, PyObject *parent)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
-    PyObject *lazy_loaded = tstate->interp->lazy_loaded;
-    if (lazy_loaded == NULL) {
+    if (parent == NULL) {
         return 0;
     }
-    assert(PyDict_CheckExact(lazy_loaded));
-    PyObject *lazy_loaded_set = PyDict_GetItem(lazy_loaded, name);
-    if (lazy_loaded_set == NULL) {
+    PyObject *lazy_submodules = ((PyModuleObject *)parent)->md_lazy_submodules;
+    if (lazy_submodules == NULL) {
         return 0;
     }
-    PyObject *parent_id = parent == NULL ? Py_NewRef(Py_None) : PyLong_FromVoidPtr(parent);
-    if (parent_id == NULL) {
-        return 0;
+    int res = PySet_Contains(lazy_submodules, name);
+    if (res < 0) {
+        return -1;
     }
-    int ret = PySet_Contains(lazy_loaded_set, parent_id);
-    Py_DECREF(parent_id);
-    return ret;
+    return res;
 }
 
 static int
 lazy_loaded_add_parent(PyObject *name, PyObject *parent)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
-    PyObject *lazy_loaded = tstate->interp->lazy_loaded;
-    if (lazy_loaded == NULL) {
-        lazy_loaded = PyDict_New();
-        if (lazy_loaded == NULL) {
-            return -1;
-        }
-        tstate->interp->lazy_loaded = lazy_loaded;
+    if (parent == NULL) {
+        return 0;
     }
-    PyObject *lazy_loaded_set = PyDict_GetItem(lazy_loaded, name);
-    if (lazy_loaded_set == NULL) {
-        lazy_loaded_set = PySet_New(NULL);
-        if (lazy_loaded_set == NULL) {
+    PyObject *lazy_submodules = ((PyModuleObject *)parent)->md_lazy_submodules;
+    if (lazy_submodules == NULL) {
+        lazy_submodules = PySet_New(NULL);
+        if (lazy_submodules == NULL) {
             return -1;
         }
-        if (PyDict_SetItem(lazy_loaded, name, lazy_loaded_set) < 0) {
-            Py_DECREF(lazy_loaded_set);
-            return -1;
-        }
-        Py_DECREF(lazy_loaded_set);
+        ((PyModuleObject *)parent)->md_lazy_submodules = lazy_submodules;
     }
-    PyObject *parent_id = parent == NULL ? Py_NewRef(Py_None) : PyLong_FromVoidPtr(parent);
-    if (parent_id == NULL) {
+    if (PySet_Add(lazy_submodules, name) < 0) {
         return -1;
     }
-    if (PySet_Add(lazy_loaded_set, parent_id) < 0) {
-        Py_DECREF(parent_id);
-        return -1;
-    }
-    Py_DECREF(parent_id);
     return 0;
 }
 
