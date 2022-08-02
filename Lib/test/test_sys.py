@@ -1408,7 +1408,7 @@ class SizeofTest(unittest.TestCase):
         def func():
             return sys._getframe()
         x = func()
-        check(x, size('3Pi3c 8Pi?ci 2P'))
+        check(x, size('3Pi3c 8Pi?ch 2P'))
         # function
         def func(): pass
         check(func, size('14Pi'))
@@ -1425,7 +1425,7 @@ class SizeofTest(unittest.TestCase):
             check(bar, size('PP'))
         # generator
         def get_gen(): yield 1
-        check(get_gen(), size('P2P4P4c 8Pi?ci P'))
+        check(get_gen(), size('P2P4P4c 8Pi?ch P'))
         # iterator
         check(iter('abc'), size('lP'))
         # callable-iterator
@@ -1453,7 +1453,7 @@ class SizeofTest(unittest.TestCase):
         check(int(PyLong_BASE**2-1), vsize('') + 2*self.longdigit)
         check(int(PyLong_BASE**2), vsize('') + 3*self.longdigit)
         # module
-        check(unittest, size('PnPPP'))
+        check(unittest, size('PnPPPP'))
         # None
         check(None, size(''))
         # NotImplementedType
