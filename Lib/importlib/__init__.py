@@ -71,7 +71,7 @@ def set_lazy_imports(enable = True, *, excluding = None):
 
 
 def enable_lazy_imports_in_module(enable = True):
-    _imp._set_lazy_imports_shallow(enabled)
+    _imp._set_lazy_imports_in_module(enabled)
 
 
 class eager_imports:
