@@ -96,5 +96,13 @@ class LazyImportsTest(unittest.TestCase):
         with importlib._lazy_imports(True):
             import_fresh_module("test.lazyimports.dict_delete")
 
+    def test_reach_max_recursion(self):
+        with importlib._lazy_imports(False):
+            import_fresh_module("test.lazyimports.reach_max_recursion")
+
+        with importlib._lazy_imports(True):
+            import_fresh_module("test.lazyimports.reach_max_recursion")
+
+
 if __name__ == '__main__':
     unittest.main()
