@@ -2349,7 +2349,15 @@ _PyDict_Next(PyObject *op, Py_ssize_t *ppos, PyObject **pkey,
  * mutates the dict.  One exception:  it is safe if the loop merely changes
  * the values associated with the keys (but doesn't insert new keys or
  * delete keys), via PyDict_SetItem().
+ *
+ * Note that, for historical reasons, PyDict_Next() suppresses all errors
+ * that may occur (originally dicts didn't support unresolved (lazy) objects,
+ * and exceptions weren't possible).  So, while the original intent was that a
+ * 0 return meant the end of the dictionary was reached, in reality it can mean
+ * that, or that an error (suppressed) occurred while resolving the values, or
+ * that some error (suppressed) occurred when reciving an invalid type of object.
  */
+
 int
 PyDict_Next(PyObject *op, Py_ssize_t *ppos, PyObject **pkey, PyObject **pvalue)
 {
@@ -2359,12 +2367,40 @@ PyDict_Next(PyObject *op, Py_ssize_t *ppos, PyObject **pkey, PyObject **pvalue)
     if (pvalue != NULL) {
         if (*ppos == 0) {
             if (PyDict_ResolveLazyImports(op) != 0) {
-                assert(0);
+                PyErr_Clear();
                 return 0;
             }
         }
         if (_PyDict_HasLazyImports(op)) {
-            assert(0);
+            return 0;
+        }
+    }
+    return _PyDict_Next(op, ppos, pkey, pvalue, NULL, NULL);
+}
+
+/* Variant of PyDict_Next() that doesn't suppress exceptions.
+   This returns 0 *with* an exception set if an exception occurred.
+   It returns 0 *without* an exception set when the reached the end of
+   the dictionary.
+*/
+int
+PyDict_NextWithError(PyObject *op, Py_ssize_t *ppos, PyObject **pkey, PyObject **pvalue)
+{
+    if (!PyDict_Check(op)) {
+        PyErr_Format(PyExc_TypeError,
+                     "A dict argument is required, not '%s'",
+                     Py_TYPE(op)->tp_name);
+        return 0;
+    }
+    if (pvalue != NULL) {
+        if (*ppos == 0) {
+            if (PyDict_ResolveLazyImports(op) != 0) {
+                return 0;
+            }
+        }
+        if (_PyDict_HasLazyImports(op)) {
+            PyErr_Format(PyExc_ValueError,
+                         "A dict without lazy imports is required");
             return 0;
         }
     }
