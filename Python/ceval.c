@@ -1664,6 +1664,11 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, _PyInterpreterFrame *frame, int 
     tstate->cframe = &cframe;
 
     frame->is_entry = true;
+
+    frame->lazy_imports = -1;
+    frame->lazy_imports_cache = 0;
+    frame->lazy_imports_cache_seq = -1;
+
     /* Push frame */
     frame->previous = prev_cframe->current_frame;
     cframe.current_frame = frame;
@@ -1707,8 +1712,6 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, _PyInterpreterFrame *frame, int 
         We choose -1 rather than 0 to assist debugging. \
         */ \
     frame->stacktop = -1;
-
-    frame->lazy_imports = -1;
 
 
 start_frame:
