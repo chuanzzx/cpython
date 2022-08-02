@@ -65,7 +65,7 @@ typedef struct _PyInterpreterFrame {
     char owner;
     int lazy_imports : 2; /* flag for lazy imports status in the current frame */
     int lazy_imports_cache : 1;
-    int lazy_imports_cache_seq : 29;
+    int lazy_imports_cache_seq : 13;
     /* Locals and stack */
     PyObject *localsplus[1];
 } _PyInterpreterFrame;
