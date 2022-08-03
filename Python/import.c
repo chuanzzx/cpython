@@ -3186,28 +3186,31 @@ _imp__maybe_set_submodule_attribute_impl(PyObject *module, PyObject *parent,
     }
 
     /* add attributes to child */
-    child_dict = PyObject_GetAttr(child_module, &_Py_ID(__dict__));
-    if (child_dict == NULL) {
-        goto error;
-    }
-    if (PyDict_CheckExact(child_dict)) {
-        PyObject *lazy_loaded = tstate->interp->lazy_loaded;
-        if (lazy_loaded != NULL) {
-            PyObject *lazy_loaded_set = PyDict_GetItem(lazy_loaded, name);
-            if (lazy_loaded_set != NULL) {
-                PyObject *attr_name;
-                Py_ssize_t pos = 0;
-                Py_hash_t hash;
-                while (_PySet_NextEntry(lazy_loaded_set, &pos, &attr_name, &hash)) {
-                    if (!lazy_loaded_contains_parent(child_module, attr_name)) {
-                        Py_XDECREF(lazy_module_attr);
-                        lazy_module_attr = new_lazy_import(name, attr_name, child_dict, child_dict);
-                        if (lazy_module_attr == NULL) {
+    PyObject *lazy_loaded = tstate->interp->lazy_loaded;
+    if (lazy_loaded != NULL) {
+        PyObject *lazy_loaded_set = PyDict_GetItem(lazy_loaded, name);
+        if (lazy_loaded_set != NULL) {
+            PyObject *attr_name;
+            Py_ssize_t pos = 0;
+            Py_hash_t hash;
+            while (_PySet_NextEntry(lazy_loaded_set, &pos, &attr_name, &hash)) {
+                if (!lazy_loaded_contains_parent(child_module, attr_name)) {
+                    if (child_dict == NULL) {
+                        child_dict = PyObject_GetAttr(child_module, &_Py_ID(__dict__));
+                        if (child_dict == NULL) {
                             goto error;
                         }
-                        if (PyDict_SetItem(child_dict, attr_name, (PyObject *)lazy_module_attr) < 0) {
-                            goto error;
+                        if (!PyDict_CheckExact(child_dict)) {
+                            break;
                         }
+                    }
+                    Py_XDECREF(lazy_module_attr);
+                    lazy_module_attr = new_lazy_import(name, attr_name, child_dict, child_dict);
+                    if (lazy_module_attr == NULL) {
+                        goto error;
+                    }
+                    if (PyDict_SetItem(child_dict, attr_name, (PyObject *)lazy_module_attr) < 0) {
+                        goto error;
                     }
                 }
             }
