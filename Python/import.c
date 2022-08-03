@@ -1790,19 +1790,22 @@ lazy_loaded_add_parent(PyObject *module, PyObject *name)
 static PyLazyImport *
 new_lazy_import(PyObject *parent, PyObject *child, PyObject *globals, PyObject *locals)
 {
-    PyObject *frmlst = PyList_New(0);
-    if (frmlst == NULL) {
+    PyObject *fromlist = PyTuple_New(1);
+    if (fromlist == NULL) {
         return NULL;
     }
-    PyList_Append(frmlst, child);
-    PyObject *frm = PyLazyImportModule_NewObject(parent, globals, locals, frmlst, NULL);
-    Py_DECREF(frmlst);
-    if (frm == NULL) {
+    Py_INCREF(child);
+    if (PyTuple_SetItem(fromlist, 0, child) < 0) {
         return NULL;
     }
-    PyLazyImport *lazy_object = (PyLazyImport *)PyLazyImportObject_NewObject(frm, child);
-    Py_DECREF(frm);
-    return lazy_object;
+    PyObject *from = PyLazyImportModule_NewObject(parent, globals, locals, fromlist, NULL);
+    Py_DECREF(fromlist);
+    if (from == NULL) {
+        return NULL;
+    }
+    PyLazyImport *lazy_import = (PyLazyImport *)PyLazyImportObject_NewObject(from, child);
+    Py_DECREF(from);
+    return lazy_import;
 }
 
 int
