@@ -2072,22 +2072,46 @@ _PyImport_ImportFrom(PyThreadState *tstate, PyObject *v, PyObject *name)
 }
 
 static PyObject *
-_imp_load_lazy_import_impl(PyLazyImport *lazy_import)
+_imp_load_lazy_import_impl(PyLazyImport *lazy_import, int deep)
 {
     PyObject *obj = NULL;
     if (lazy_import->lz_lazy_import == NULL) {
-        obj = PyImport_EagerImportName(PyEval_GetBuiltins(),
-                                       lazy_import->lz_globals,
-                                       lazy_import->lz_locals,
-                                       lazy_import->lz_name,
-                                       lazy_import->lz_fromlist,
-                                       lazy_import->lz_level);
+        Py_ssize_t dot;
+        if (lazy_import->lz_fromlist != NULL &&
+            lazy_import->lz_fromlist != Py_None &&
+            PyObject_IsTrue(lazy_import->lz_fromlist)) {
+            deep = 1;
+        }
+        if (!deep) {
+            dot = PyUnicode_FindChar(lazy_import->lz_name, '.', 0, PyUnicode_GET_LENGTH(lazy_import->lz_name), 1);
+            if (dot < 0) {
+                deep = 1;
+            }
+        }
+        if (deep) {
+            obj = PyImport_EagerImportName(PyEval_GetBuiltins(),
+                                           lazy_import->lz_globals,
+                                           lazy_import->lz_locals,
+                                           lazy_import->lz_name,
+                                           lazy_import->lz_fromlist,
+                                           lazy_import->lz_level);
+        } else {
+            PyObject *name = PyUnicode_Substring(lazy_import->lz_name, 0, dot);
+            obj = PyImport_EagerImportName(PyEval_GetBuiltins(),
+                                           lazy_import->lz_globals,
+                                           lazy_import->lz_locals,
+                                           name,
+                                           lazy_import->lz_fromlist,
+                                           lazy_import->lz_level);
+            Py_DECREF(name);
+        }
+
         if (obj == NULL) {
             goto error;
         }
     }
     else {
-        PyObject *from = _imp_load_lazy_import_impl((PyLazyImport *)lazy_import->lz_lazy_import);
+        PyObject *from = _imp_load_lazy_import_impl((PyLazyImport *)lazy_import->lz_lazy_import, 1);
         if (from == NULL) {
             goto error;
         }
@@ -2098,7 +2122,7 @@ _imp_load_lazy_import_impl(PyLazyImport *lazy_import)
             goto error;
         }
         if (PyLazyImport_CheckExact(obj)) {
-            PyObject *value = _imp_load_lazy_import_impl((PyLazyImport *)obj);
+            PyObject *value = _imp_load_lazy_import_impl((PyLazyImport *)obj, 0);
             Py_DECREF(obj);
             if (value == NULL) {
                 goto error;
@@ -2111,7 +2135,7 @@ _imp_load_lazy_import_impl(PyLazyImport *lazy_import)
 }
 
 PyObject *
-PyImport_LoadLazyImport(PyObject *lazy_import)
+PyImport_LoadLazyImport(PyObject *lazy_import, int deep)
 {
     PyObject *thread_id = NULL;
     assert(lazy_import != NULL);
@@ -2143,7 +2167,7 @@ PyImport_LoadLazyImport(PyObject *lazy_import)
             if (PySet_Add(lz->lz_resolving, thread_id) < 0) {
                 goto error;
             }
-            obj = _imp_load_lazy_import_impl(lz);
+            obj = _imp_load_lazy_import_impl(lz, deep);
             if (PySet_Discard(lz->lz_resolving, thread_id) < 0) {
                 Py_DECREF(obj);
                 obj = NULL;

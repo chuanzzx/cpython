@@ -1154,7 +1154,7 @@ start:
         value = *value_ptr;
     if (value && PyLazyImport_CheckExact(value)) {
         assert(dk->dk_lazy_imports);
-        PyObject *resolved_value = PyImport_LoadLazyImport(value);
+        PyObject *resolved_value = PyImport_LoadLazyImport(value, 0);
         if (resolved_value == NULL) {
             *value_addr = NULL;
             if (PyErr_Occurred()) {
@@ -1832,7 +1832,7 @@ _PyDict_GetItemHint(PyDictObject *mp, PyObject *key,
             value = *value_ptr;
             if (value && PyLazyImport_CheckExact(value)) {
                 assert(dk->dk_lazy_imports);
-                PyObject *resolved_value = PyImport_LoadLazyImport(value);
+                PyObject *resolved_value = PyImport_LoadLazyImport(value, 0);
                 if (resolved_value == NULL) {
                     *value_addr = NULL;
                     if (PyErr_Occurred()) {
@@ -2953,7 +2953,7 @@ top:
         item = PyList_GET_ITEM(v, i);
         value = PyTuple_GET_ITEM(item, 1);
         assert(PyLazyImport_CheckExact(value));
-        resolved_value = PyImport_LoadLazyImport(value);
+        resolved_value = PyImport_LoadLazyImport(value, 0);
         if (resolved_value == NULL) {
             /* import failed, check if we want to just ignore... */
             PyObject *et, *ev, *tb;
@@ -3904,7 +3904,7 @@ dict_popitem_impl(PyDictObject *self)
 
     if (value && PyLazyImport_CheckExact(value)) {
         assert(self->ma_keys->dk_lazy_imports);
-        PyObject *resolved_value = PyImport_LoadLazyImport(value);
+        PyObject *resolved_value = PyImport_LoadLazyImport(value, 0);
         if (resolved_value == NULL) {
             if (!PyErr_Occurred()) {
                 PyErr_SetString(PyExc_KeyError, "popitem(): Lazy Import cycle");
