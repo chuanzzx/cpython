@@ -1047,11 +1047,12 @@ PyLazyImportObject_NewObject(PyObject *from, PyObject *name)
     }
     PyLazyImport *lazy_from = (PyLazyImport *)from;
     if (lazy_from->lz_fromlist != NULL && lazy_from->lz_fromlist != Py_None) {
-        PyObject *fromlist = PyList_New(0);
+        PyObject *fromlist = PyTuple_New(1);
         if (fromlist == NULL) {
             return NULL;
         }
-        if (PyList_Append(fromlist, name) < 0) {
+        Py_INCREF(name);
+        if (PyTuple_SetItem(fromlist, 0, name) < 0) {
             return NULL;
         }
         PyObject *new_lazy_from = PyLazyImportModule_NewObject(
