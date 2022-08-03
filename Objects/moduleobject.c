@@ -1055,13 +1055,13 @@ PyLazyImportObject_NewObject(PyObject *from, PyObject *name)
         if (PyTuple_SetItem(fromlist, 0, name) < 0) {
             return NULL;
         }
-        PyObject *new_lazy_from = PyLazyImportModule_NewObject(
+        PyObject *new_from = PyLazyImportModule_NewObject(
             lazy_from->lz_name, lazy_from->lz_globals, lazy_from->lz_locals, fromlist, lazy_from->lz_level);
         Py_DECREF(fromlist);
-        if (new_lazy_from == NULL) {
+        if (new_from == NULL) {
             return NULL;
         }
-        m->lz_lazy_import = new_lazy_from;
+        m->lz_lazy_import = new_from;
     } else {
         Py_INCREF(from);
         m->lz_lazy_import = from;
