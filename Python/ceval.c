@@ -2794,14 +2794,6 @@ handle_eval_breaker:
                 goto error;
             }
             if (PyDict_CheckExact(ns)) {
-                if (PyLazyImport_CheckExact(v)) {
-                    PyObject *d = PyDict_GetItemKeepLazy(ns, name);
-                    if (d != NULL && PyLazyImport_CheckExact(d)) {
-                        assert(((PyLazyImport *)v)->lz_next == NULL);
-                        Py_INCREF(d);
-                        ((PyLazyImport *)v)->lz_next = d;
-                    }
-                }
                 err = PyDict_SetItem(ns, name, v);
             } else {
                 err = PyObject_SetItem(ns, name, v);
@@ -2947,16 +2939,7 @@ handle_eval_breaker:
         TARGET(STORE_GLOBAL) {
             PyObject *name = GETITEM(names, oparg);
             PyObject *v = POP();
-            int err;
-            if (PyLazyImport_CheckExact(v)) {
-                PyObject *d = PyDict_GetItemKeepLazy(GLOBALS(), name);
-                if (d != NULL && PyLazyImport_CheckExact(d)) {
-                    assert(((PyLazyImport *)v)->lz_next == NULL);
-                    Py_INCREF(d);
-                    ((PyLazyImport *)v)->lz_next = d;
-                }
-            }
-            err = PyDict_SetItem(GLOBALS(), name, v);
+            int err = PyDict_SetItem(GLOBALS(), name, v);
             Py_DECREF(v);
             if (err != 0)
                 goto error;
