@@ -1,4 +1,5 @@
 # Test the lazy imports objects are not exposed when checking the values of dictionaries
+import self
 import importlib
 from test.lazyimports.customized_modules import module
 from test.lazyimports.customized_modules.module import *
@@ -15,24 +16,24 @@ def notExposeLazyPrefix(obj_repr):
 
 # Test dict.values()
 for value in g_copy1.values():
-    assert(notExposeLazyPrefix(repr(value)))
+    self.assertNotRegex(repr(value), r"<lazy_import ")
 
 # Test dict.items()
 for key, value in g_copy2.items():
-    assert(notExposeLazyPrefix(repr(value)))
+    self.assertNotRegex(repr(value), r"<lazy_import ")
 
 # Test iter(dict.values())
 it = iter(g_copy3.values())
 for value in it:
-    assert(notExposeLazyPrefix(repr(value)))
+    self.assertNotRegex(repr(value), r"<lazy_import ")
 
 # Test iter(dict.items())
 it = iter(g_copy4.items())
 for key, value in it:
-    assert(notExposeLazyPrefix(repr(value)))
+    self.assertNotRegex(repr(value), r"<lazy_import ")
 
 # Test directly getting values by using keys
-assert(notExposeLazyPrefix(repr(g["module"])))
-assert(notExposeLazyPrefix(repr(g["sub_module1"])))
-assert(notExposeLazyPrefix(repr(g["sub_module2"])))
-assert(notExposeLazyPrefix(repr(g["sub_module3"])))
+self.assertNotRegex(repr(g["module"]), r"<lazy_import ")
+self.assertNotRegex(repr(g["sub_module1"]), r"<lazy_import ")
+self.assertNotRegex(repr(g["sub_module2"]), r"<lazy_import ")
+self.assertNotRegex(repr(g["sub_module3"]), r"<lazy_import ")
