@@ -1967,16 +1967,6 @@ PyImport_LazyImportName(PyObject *builtins, PyObject *globals, PyObject *locals,
                 if (lazy_module_attr == NULL) {
                     goto error;
                 }
-                PyObject *attr = PyDict_GetItemKeepLazy(parent_dict, child);
-                if (attr == NULL) {
-                    if (PyErr_Occurred()) {
-                        goto error;
-                    }
-                } else if (PyLazyImport_CheckExact(attr)) {
-                    assert(lazy_module_attr->lz_next == NULL);
-                    Py_INCREF(attr);
-                    lazy_module_attr->lz_next = attr;
-                }
                 if (PyDict_SetItem(parent_dict, child, (PyObject *)lazy_module_attr) < 0) {
                     goto error;
                 }
@@ -2082,13 +2072,6 @@ static PyObject *
 _imp_load_lazy_import_impl(PyLazyImport *lazy_import)
 {
     PyObject *obj = NULL;
-    if (lazy_import->lz_next != NULL) {
-        PyObject *value = _imp_load_lazy_import_impl((PyLazyImport *)lazy_import->lz_next);
-        if (value == NULL) {
-            goto error;
-        }
-        Py_DECREF(value);
-    }
     if (lazy_import->lz_lazy_import == NULL) {
         obj = PyImport_EagerImportName(PyEval_GetBuiltins(),
                                        lazy_import->lz_globals,
@@ -3194,16 +3177,6 @@ _imp__maybe_set_submodule_attribute_impl(PyObject *module, PyObject *parent,
                         lazy_module_attr = new_lazy_import(name, attr_name, child_dict, child_dict);
                         if (lazy_module_attr == NULL) {
                             goto error;
-                        }
-                        PyObject *attr = PyDict_GetItemKeepLazy(child_dict, attr_name);
-                        if (attr == NULL) {
-                            if (PyErr_Occurred()) {
-                                goto error;
-                            }
-                        } else if (PyLazyImport_CheckExact(attr)) {
-                            assert(lazy_module_attr->lz_next == NULL);
-                            Py_INCREF(attr);
-                            lazy_module_attr->lz_next = attr;
                         }
                         if (PyDict_SetItem(child_dict, attr_name, (PyObject *)lazy_module_attr) < 0) {
                             goto error;
