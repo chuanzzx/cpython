@@ -124,6 +124,14 @@ class LazyImportsTest(unittest.TestCase):
         with importlib._lazy_imports(True):
             import_fresh_module("test.lazyimports.dict_values")
 
+    def test_lazy_side_effects(self):
+        with importlib._lazy_imports(True):
+            import_fresh_module("test.lazyimports.lazy_side_effects")
+
+    def test_lazy_submodules(self):
+        with importlib._lazy_imports(True):
+            import_fresh_module("test.lazyimports.lazy_submodules")
+
 
 if __name__ == '__main__':
     unittest.main()
