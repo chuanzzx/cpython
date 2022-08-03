@@ -3109,7 +3109,7 @@ handle_eval_breaker:
             if (PyLazyImport_CheckExact(res)) {
                 assert(dict->ma_keys->dk_lazy_imports);
                 uint64_t version_tag = dict->ma_version_tag;
-                PyObject *resolved = PyImport_LoadLazyImport(res);
+                PyObject *resolved = PyImport_LoadLazyImport(res, 0);
                 DEOPT_IF(resolved == NULL, LOAD_GLOBAL);
                 DEOPT_IF(dict->ma_version_tag != version_tag, LOAD_GLOBAL);
                 DEOPT_IF(dict->ma_keys->dk_version != version, LOAD_GLOBAL);
@@ -3145,7 +3145,7 @@ handle_eval_breaker:
             if (PyLazyImport_CheckExact(res)) {
                 assert(bdict->ma_keys->dk_lazy_imports);
                 uint64_t version_tag = bdict->ma_version_tag;
-                PyObject *resolved = PyImport_LoadLazyImport(res);
+                PyObject *resolved = PyImport_LoadLazyImport(res, 0);
                 DEOPT_IF(resolved == NULL, LOAD_GLOBAL);
                 DEOPT_IF(bdict->ma_version_tag != version_tag, LOAD_GLOBAL);
                 DEOPT_IF(mdict->ma_keys->dk_version != mod_version, LOAD_GLOBAL);
@@ -3621,7 +3621,7 @@ handle_eval_breaker:
             if (PyLazyImport_CheckExact(res)) {
                 assert(dict->ma_keys->dk_lazy_imports);
                 uint64_t version_tag = dict->ma_version_tag;
-                PyObject *resolved = PyImport_LoadLazyImport(res);
+                PyObject *resolved = PyImport_LoadLazyImport(res, 0);
                 DEOPT_IF(resolved == NULL, LOAD_ATTR);
                 DEOPT_IF(dict->ma_version_tag != version_tag, LOAD_ATTR);
                 DEOPT_IF(dict->ma_keys->dk_version != read_u32(cache->version),
@@ -3666,7 +3666,7 @@ handle_eval_breaker:
                 if (PyLazyImport_CheckExact(res)) {
                     assert(dict->ma_keys->dk_lazy_imports);
                     uint64_t version_tag = dict->ma_version_tag;
-                    PyObject *resolved = PyImport_LoadLazyImport(res);
+                    PyObject *resolved = PyImport_LoadLazyImport(res, 0);
                     DEOPT_IF(resolved == NULL, LOAD_ATTR);
                     DEOPT_IF(dict->ma_version_tag != version_tag, LOAD_ATTR);
                     Py_DECREF(res);
@@ -3682,7 +3682,7 @@ handle_eval_breaker:
                 if (PyLazyImport_CheckExact(res)) {
                     assert(dict->ma_keys->dk_lazy_imports);
                     uint64_t version_tag = dict->ma_version_tag;
-                    PyObject *resolved = PyImport_LoadLazyImport(res);
+                    PyObject *resolved = PyImport_LoadLazyImport(res, 0);
                     DEOPT_IF(resolved == NULL, LOAD_ATTR);
                     DEOPT_IF(dict->ma_version_tag != version_tag, LOAD_ATTR);
                     Py_DECREF(res);
@@ -4184,7 +4184,7 @@ handle_eval_breaker:
             int err;
 
             if (PyLazyImport_CheckExact(from)) {
-                PyObject *mod = PyImport_LoadLazyImport(from);
+                PyObject *mod = PyImport_LoadLazyImport(from, 1);
                 Py_DECREF(from);
                 if (mod == NULL) {
                     if (!_PyErr_Occurred(tstate)) {
