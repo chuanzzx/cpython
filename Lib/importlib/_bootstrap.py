@@ -1115,7 +1115,7 @@ _ERR_MSG = _ERR_MSG_PREFIX + '{!r}'
 
 def _find_and_load_unlocked(name, import_):
     path = None
-    parent = name.rpartition('.')[0]
+    parent, _, child = name.rpartition('.')
     parent_spec = None
     if parent:
         if parent not in sys.modules:
@@ -1130,7 +1130,6 @@ def _find_and_load_unlocked(name, import_):
             msg = (_ERR_MSG + '; {!r} is not a package').format(name, parent)
             raise ModuleNotFoundError(msg, name=name) from None
         parent_spec = parent_module.__spec__
-        child = name.rpartition('.')[2]
     spec = _find_spec(name, path)
     if spec is None:
         raise ModuleNotFoundError(_ERR_MSG.format(name), name=name)
@@ -1144,14 +1143,11 @@ def _find_and_load_unlocked(name, import_):
         finally:
             if parent_spec:
                 parent_spec._uninitialized_submodules.pop()
-    if parent:
-        # Set the module as an attribute on its parent.
-        parent_module = sys.modules[parent]
-        try:
-            _imp._maybe_set_submodule_attribute(parent_module, child, module, name)
-        except AttributeError:
-            msg = f"Cannot set an attribute on {parent!r} for child module {child!r}"
-            _warnings.warn(msg, ImportWarning)
+    try:
+        _imp._maybe_set_submodule_attribute(parent, child, module, name)
+    except Exception as e:
+        msg = f"Cannot set an attribute on {parent!r} for child module {child!r}"
+        _warnings.warn(msg, ImportWarning)
     return module
 
 

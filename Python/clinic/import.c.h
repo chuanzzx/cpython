@@ -807,8 +807,8 @@ _imp_is_lazy_imports_enabled(PyObject *module, PyObject *Py_UNUSED(ignored))
 }
 
 PyDoc_STRVAR(_imp__maybe_set_submodule_attribute__doc__,
-"_maybe_set_submodule_attribute($module, parent_module, child,\n"
-"                               child_module, name, /)\n"
+"_maybe_set_submodule_attribute($module, parent, child, child_module,\n"
+"                               name, /)\n"
 "--\n"
 "\n"
 "Sets the module as an attribute on its parent, if the side effect is neded.");
@@ -817,8 +817,7 @@ PyDoc_STRVAR(_imp__maybe_set_submodule_attribute__doc__,
     {"_maybe_set_submodule_attribute", _PyCFunction_CAST(_imp__maybe_set_submodule_attribute), METH_FASTCALL, _imp__maybe_set_submodule_attribute__doc__},
 
 static PyObject *
-_imp__maybe_set_submodule_attribute_impl(PyObject *module,
-                                         PyObject *parent_module,
+_imp__maybe_set_submodule_attribute_impl(PyObject *module, PyObject *parent,
                                          PyObject *child,
                                          PyObject *child_module,
                                          PyObject *name);
@@ -827,7 +826,7 @@ static PyObject *
 _imp__maybe_set_submodule_attribute(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
 {
     PyObject *return_value = NULL;
-    PyObject *parent_module;
+    PyObject *parent;
     PyObject *child;
     PyObject *child_module;
     PyObject *name;
@@ -835,7 +834,21 @@ _imp__maybe_set_submodule_attribute(PyObject *module, PyObject *const *args, Py_
     if (!_PyArg_CheckPositional("_maybe_set_submodule_attribute", nargs, 4, 4)) {
         goto exit;
     }
-    parent_module = args[0];
+    if (!PyUnicode_Check(args[0])) {
+        _PyArg_BadArgument("_maybe_set_submodule_attribute", "argument 1", "str", args[0]);
+        goto exit;
+    }
+    if (PyUnicode_READY(args[0]) == -1) {
+        goto exit;
+    }
+    parent = args[0];
+    if (!PyUnicode_Check(args[1])) {
+        _PyArg_BadArgument("_maybe_set_submodule_attribute", "argument 2", "str", args[1]);
+        goto exit;
+    }
+    if (PyUnicode_READY(args[1]) == -1) {
+        goto exit;
+    }
     child = args[1];
     child_module = args[2];
     if (!PyUnicode_Check(args[3])) {
@@ -846,7 +859,7 @@ _imp__maybe_set_submodule_attribute(PyObject *module, PyObject *const *args, Py_
         goto exit;
     }
     name = args[3];
-    return_value = _imp__maybe_set_submodule_attribute_impl(module, parent_module, child, child_module, name);
+    return_value = _imp__maybe_set_submodule_attribute_impl(module, parent, child, child_module, name);
 
 exit:
     return return_value;
@@ -859,4 +872,4 @@ exit:
 #ifndef _IMP_EXEC_DYNAMIC_METHODDEF
     #define _IMP_EXEC_DYNAMIC_METHODDEF
 #endif /* !defined(_IMP_EXEC_DYNAMIC_METHODDEF) */
-/*[clinic end generated code: output=e96c66df059da1a7 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=2970e6395c24228b input=a9049054013a1b77]*/

@@ -1000,13 +1000,21 @@ PyLazyImportModule_NewObject(
 {
     PyLazyImport *m;
     if (!name || !PyUnicode_Check(name) ||
-        !globals || !locals ||
-        !fromlist || !level) {
+        !globals || !locals || !fromlist) {
         PyErr_BadArgument();
         return NULL;
     }
+    if (level == NULL) {
+        level = PyLong_FromLong(0);
+        if (level == NULL) {
+            return NULL;
+        }
+    } else {
+        Py_INCREF(level);
+    }
     m = PyObject_GC_New(PyLazyImport, &PyLazyImport_Type);
     if (m == NULL) {
+        Py_DECREF(level);
         return NULL;
     }
     m->lz_lazy_import = NULL;
@@ -1018,7 +1026,6 @@ PyLazyImportModule_NewObject(
     m->lz_locals = locals;
     Py_INCREF(fromlist);
     m->lz_fromlist = fromlist;
-    Py_INCREF(level);
     m->lz_level = level;
     m->lz_obj = NULL;
     m->lz_next = NULL;
