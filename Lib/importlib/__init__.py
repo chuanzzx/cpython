@@ -88,19 +88,6 @@ class eager_imports:
         pass
 
 
-class _lazy_imports:
-    def __init__(self, enable = True, *, excluding = None):
-        self.enable = enable
-        self.excluding = excluding
-        self.previously = None
-
-    def __enter__(self):
-        self.previously = _imp._set_lazy_imports(self.enable, excluding=self.excluding)
-
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        _imp._set_lazy_imports(*self.previously)
-
-
 def invalidate_caches():
     """Call the invalidate_caches() method on all meta path finders stored in
     sys.meta_path (where implemented)."""

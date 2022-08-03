@@ -1,3 +1,4 @@
+import self
 import importlib
 
 from . import foo
@@ -7,5 +8,5 @@ excluding
 
 from . import bar
 
-assert(importlib.is_lazy_import(globals(), "foo"))
-assert(not importlib.is_lazy_import(globals(), "bar"))
+self.assertTrue(importlib.is_lazy_import(globals(), "foo"))
+self.assertFalse(importlib.is_lazy_import(globals(), "bar"))
