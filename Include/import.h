@@ -92,24 +92,23 @@ PyAPI_FUNC(PyObject *) PyImport_SetLazyImports(PyObject *enabled, PyObject *excl
 PyAPI_FUNC(int) PyImport_IsLazyImportsEnabled(void);
 
 PyAPI_FUNC(PyObject *) PyImport_LoadLazyImport(
-    PyObject *lazy_object
-    );
+    PyObject *lazy_object);
 
-PyObject * PyImport_LazyImportName(
+PyAPI_FUNC(PyObject *) PyImport_LazyImportName(
     PyObject *builtins,
     PyObject *globals,
     PyObject *locals,
     PyObject *name,
     PyObject *fromlist,
     PyObject *level);
-PyObject * PyImport_EagerImportName(
+PyAPI_FUNC(PyObject *) PyImport_EagerImportName(
     PyObject *builtins,
     PyObject *globals,
     PyObject *locals,
     PyObject *name,
     PyObject *fromlist,
     PyObject *level);
-PyObject * _PyImport_ImportFrom(
+PyAPI_FUNC(PyObject *) _PyImport_ImportFrom(
     PyThreadState *tstate,
     PyObject *v,
     PyObject *name);
