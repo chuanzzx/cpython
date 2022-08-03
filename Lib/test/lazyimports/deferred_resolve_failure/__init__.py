@@ -1,3 +1,10 @@
-from test.lazyimports.deferred_resolve_failure import type
+import self
+import importlib
 
-from test.lazyimports.deferred_resolve_failure.utilities import type_from_ast
+if importlib.is_lazy_imports_enabled():
+    from . import trigger
+else:
+    with self.assertRaises(ImportError) as cm:
+        from . import trigger
+    ex = cm.exception
+    self.assertIn("(most likely due to a circular import)", repr(ex))

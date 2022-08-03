@@ -1,7 +1,11 @@
+import self
+import _imp
 import importlib
+
 previous = importlib.is_lazy_imports_enabled()
 
-with importlib._lazy_imports():
-    assert(importlib.is_lazy_imports_enabled() == True)
+p = _imp._set_lazy_imports()
+self.assertTrue(importlib.is_lazy_imports_enabled())
+_imp._set_lazy_imports(*p)
 
-assert(importlib.is_lazy_imports_enabled() == previous)
+self.assertEqual(importlib.is_lazy_imports_enabled(), previous)
