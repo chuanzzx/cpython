@@ -99,7 +99,6 @@ typedef struct {
     PyObject *lz_fromlist;
     PyObject *lz_level;
     PyObject *lz_obj;
-    PyObject *lz_next;
     PyObject *lz_resolving;
 } PyLazyImport;
 
