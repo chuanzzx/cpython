@@ -8,7 +8,6 @@ import test.lazyimports.customized_modules.module_delete.module_delete_sub
 
 del sys.modules["test.lazyimports.customized_modules.module_delete"]
 
-
 import test.lazyimports.customized_modules.module_delete
 test.lazyimports.customized_modules.module_delete
 import test.lazyimports.customized_modules.module_delete.module_delete_sub
