@@ -1,2 +1,2 @@
-from .foo import FooBar
-FooBar()
+from .x import X2
+X2()

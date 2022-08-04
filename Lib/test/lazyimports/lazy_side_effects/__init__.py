@@ -1,10 +1,13 @@
 import self
 
-import test.lazyimports.lazy_side_effects.foo.bar
-from test.lazyimports.lazy_side_effects.foo import baz
-import test.lazyimports.lazy_side_effects.foo as f
+import test.lazyimports.customized_modules.foo.bar
+from test.lazyimports.customized_modules.foo import ack
+import test.lazyimports.customized_modules.foo as foo
 
-self.assertEqual(f.bar.Bar, "Bar")
+self.assertEqual(foo.bar.Bar, "Bar")
 
-with self.assertRaises(AttributeError):
-    print(f.baz.Baz)
+if self._lazy_imports:
+    with self.assertRaises(AttributeError):
+        foo.ack.Ack
+else:
+    self.assertEqual(foo.ack.Ack, "Ack")

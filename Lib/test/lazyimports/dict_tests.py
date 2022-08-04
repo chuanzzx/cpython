@@ -1,15 +1,24 @@
 import self
+if not self._lazy_imports:
+    self.skipTest("Test relevant only when running with lazy imports enabled")
+
 import importlib
 
 
+"""
+Test lazy imports
+"""
 from test.lazyimports.customized_modules import module
 self.assertTrue(importlib.is_lazy_import(globals(), "module"))
 
 
+"""
+Test dictionary copy and resolving lazy imports
+"""
 g = globals()
 gcopy = g.copy()
 gcopy_resolved = gcopy.copy()
-gcopy_resolved.items() # resolve
+gcopy_resolved.values()  # resolve all elements
 
 self.assertTrue(importlib.is_lazy_import(g, "module"))
 self.assertTrue(importlib.is_lazy_import(gcopy, "module"))
