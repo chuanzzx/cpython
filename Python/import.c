@@ -1808,7 +1808,7 @@ new_lazy_import(PyObject *parent, PyObject *child, PyObject *globals, PyObject *
     return lazy_import;
 }
 
-int
+static int
 feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
 {
     PyObject *lazy_loaded = tstate->interp->lazy_loaded;
