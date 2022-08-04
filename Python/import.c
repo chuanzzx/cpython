@@ -1861,7 +1861,14 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
 
         PyObject *parent_dict = NULL;
         PyObject *parent_module = _PyImport_GetModule(tstate, parent);
-        if (parent_module != NULL) {
+        if (parent_module == NULL) {
+            if (PyErr_Occurred()) {
+                Py_DECREF(child);
+                Py_DECREF(parent);
+                Py_DECREF(name);
+                return -1;
+            }
+        } else {
             parent_dict = PyObject_GetAttr(parent_module, &_Py_ID(__dict__));
             if (parent_dict == NULL) {
                 Py_DECREF(parent_module);
@@ -1876,8 +1883,8 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
                 if (parent_dict != NULL) {
                     PyLazyImport *lazy_module_attr = new_lazy_import(parent, child, parent_dict, parent_dict);
                     if (lazy_module_attr == NULL) {
-                        Py_XDECREF(parent_dict);
-                        Py_XDECREF(parent_module);
+                        Py_DECREF(parent_dict);
+                        Py_DECREF(parent_module);
                         Py_DECREF(child);
                         Py_DECREF(parent);
                         Py_DECREF(name);
@@ -1885,8 +1892,8 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
                     }
                     if (PyDict_SetItem(parent_dict, child, (PyObject *)lazy_module_attr) < 0) {
                         Py_DECREF(lazy_module_attr);
-                        Py_XDECREF(parent_dict);
-                        Py_XDECREF(parent_module);
+                        Py_DECREF(parent_dict);
+                        Py_DECREF(parent_module);
                         Py_DECREF(child);
                         Py_DECREF(parent);
                         Py_DECREF(name);
@@ -1896,7 +1903,7 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
                 }
                 if (lazy_loaded_add_parent(parent_module, child) < 0) {
                     Py_XDECREF(parent_dict);
-                    Py_XDECREF(parent_module);
+                    Py_DECREF(parent_module);
                     Py_DECREF(child);
                     Py_DECREF(parent);
                     Py_DECREF(name);
@@ -3214,6 +3221,9 @@ _imp__maybe_set_submodule_attribute_impl(PyObject *module, PyObject *parent,
                         goto error;
                     }
                 }
+            }
+            if (PyDict_DelItem(lazy_loaded, name) < 0) {
+                goto error;
             }
         }
     }
