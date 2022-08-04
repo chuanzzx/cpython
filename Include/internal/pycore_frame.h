@@ -63,9 +63,9 @@ typedef struct _PyInterpreterFrame {
     int stacktop;     /* Offset of TOS from localsplus  */
     bool is_entry;  // Whether this is the "root" frame for the current _PyCFrame.
     char owner;
-    int lazy_imports : 2; /* flag for lazy imports status in the current frame */
-    int lazy_imports_cache : 1;
-    int lazy_imports_cache_seq : 13;
+    short lazy_imports : 2; /* flag for lazy imports status in the current frame */
+    short lazy_imports_cache : 1;
+    short lazy_imports_cache_seq : 13;
     /* Locals and stack */
     PyObject *localsplus[1];
 } _PyInterpreterFrame;
