@@ -1,2 +1,2 @@
 __version__ = "1.0"
-__copyright__ = "Copyright 2022 Meta Platforms, Inc."
+__copyright__ = "Copyright (c) 2001-2022 Python Software Foundation."

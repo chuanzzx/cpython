@@ -9,23 +9,6 @@ from test.support.script_helper import run_python_until_end
 from test.support.import_helper import import_fresh_module
 
 
-class LazyImports:
-    def __init__(self, obj, enable):
-        self.obj = obj
-        self.enable = enable
-        self.previously = None
-
-    def __enter__(self):
-        self.previously = _imp._set_lazy_imports(self.enable)
-        self.original_modules = sys.modules.copy()
-        sys.modules["self"] = self.obj
-
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        sys.modules.clear()
-        sys.modules.update(self.original_modules)
-        _imp._set_lazy_imports(*self.previously)
-
-
 class TestLazyImportsSanity(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super(TestLazyImportsSanity, self).__init__(*args, **kwargs)
@@ -76,8 +59,13 @@ class LazyImportsTest(unittest.TestCase):
         ):
             msg = f"{name}{' (lazy)' if lazy else ' (eager)'}"
             with self.subTest(msg=msg):
-                with LazyImports(self, lazy):
+                previously = _imp._set_lazy_imports(lazy)
+                sys.modules["self"] = self
+                try:
                     importlib.import_module(name)
+                finally:
+                    del sys.modules["self"]
+                    _imp._set_lazy_imports(previously)
 
 
 if __name__ == '__main__':
