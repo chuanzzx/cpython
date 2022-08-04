@@ -1,14 +1,18 @@
 import self
 import sys
 
-import test.lazyimports.lazy_submodules
-import test.lazyimports.lazy_submodules.foo.bar as bar
-import test.lazyimports.lazy_submodules.foo.baz as baz
+import test.lazyimports.customized_modules
+import test.lazyimports.customized_modules.foo.bar as bar
+import test.lazyimports.customized_modules.foo.ack as ack
 
 bar.Bar
 
-self.assertIn("test.lazyimports.lazy_submodules.foo.bar", sys.modules)
-self.assertNotIn("test.lazyimports.lazy_submodules.foo.baz", sys.modules)
+self.assertIn("test.lazyimports.customized_modules.foo.bar", set(sys.modules))
+if self._lazy_imports:
+    self.assertNotIn("test.lazyimports.customized_modules.foo.ack", set(sys.modules))
+else:
+    self.assertIn("test.lazyimports.customized_modules.foo.ack", set(sys.modules))
 
-import test.lazyimports.lazy_submodules.waldo.fred as fred
-self.assertEqual(test.lazyimports.lazy_submodules.waldo.Waldo, "Waldo")
+import test.lazyimports.customized_modules.waldo.fred as fred
+
+self.assertEqual(test.lazyimports.customized_modules.waldo.Waldo, "Waldo")

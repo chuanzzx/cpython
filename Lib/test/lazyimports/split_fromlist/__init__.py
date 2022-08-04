@@ -1,6 +1,13 @@
 import self
-from .foo import test
+import sys
+import importlib
+from test.lazyimports.customized_modules import foo, waldo
 
-expected_result = {'test.lazyimports.split_fromlist.foo', 'test.lazyimports.split_fromlist.foo.bar'}
-result = test()
-self.assertEqual(result, expected_result)
+foo  # trigger loading of `foo`
+
+self.assertIn("test.lazyimports.customized_modules.foo", set(sys.modules))
+
+if self._lazy_imports:
+    self.assertNotIn("test.lazyimports.customized_modules.waldo", set(sys.modules))
+else:
+    self.assertIn("test.lazyimports.customized_modules.waldo", set(sys.modules))
