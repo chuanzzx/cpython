@@ -33,7 +33,6 @@ PyAPI_FUNC(PyObject *) PyImport_ExecCodeModuleObject(
 #endif
 PyAPI_FUNC(PyObject *) PyImport_GetModuleDict(void);
 #if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03070000
-PyAPI_FUNC(PyObject *) _PyImport_GetModule(PyThreadState *tstate, PyObject *name);
 PyAPI_FUNC(PyObject *) PyImport_GetModule(PyObject *name);
 #endif
 #if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03030000
@@ -87,32 +86,11 @@ PyAPI_FUNC(int) PyImport_AppendInittab(
     PyObject* (*initfunc)(void)
     );
 
-// TODO(lazy_imports): ifdef guards?
-PyAPI_FUNC(PyObject *) PyImport_SetLazyImports(PyObject *enabled, PyObject *excluding);
 PyAPI_FUNC(int) PyImport_IsLazyImportsEnabled(void);
-
-PyAPI_FUNC(PyObject *) PyImport_LoadLazyImport(
-    PyObject *lazy_object,
-    int deep);
-
-PyAPI_FUNC(PyObject *) PyImport_LazyImportName(
-    PyObject *builtins,
-    PyObject *globals,
-    PyObject *locals,
-    PyObject *name,
-    PyObject *fromlist,
-    PyObject *level);
-PyAPI_FUNC(PyObject *) PyImport_EagerImportName(
-    PyObject *builtins,
-    PyObject *globals,
-    PyObject *locals,
-    PyObject *name,
-    PyObject *fromlist,
-    PyObject *level);
-PyAPI_FUNC(PyObject *) _PyImport_ImportFrom(
-    PyThreadState *tstate,
-    PyObject *v,
-    PyObject *name);
+PyAPI_FUNC(PyObject *) PyImport_SetLazyImports(
+    PyObject *enabled, PyObject *excluding);
+PyAPI_FUNC(PyObject *) PyImport_SetLazyImportsInModule(
+    PyObject *enabled);
 
 #ifndef Py_LIMITED_API
 #  define Py_CPYTHON_IMPORT_H
