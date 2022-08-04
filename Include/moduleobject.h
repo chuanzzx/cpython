@@ -8,7 +8,6 @@ extern "C" {
 #endif
 
 PyAPI_DATA(PyTypeObject) PyModule_Type;
-PyAPI_DATA(PyTypeObject) PyLazyImport_Type;
 
 #define PyModule_Check(op) PyObject_TypeCheck((op), &PyModule_Type)
 #define PyModule_CheckExact(op) Py_IS_TYPE((op), &PyModule_Type)
@@ -42,11 +41,6 @@ PyAPI_FUNC(void*) PyModule_GetState(PyObject*);
 PyAPI_FUNC(PyObject *) PyModuleDef_Init(PyModuleDef*);
 PyAPI_DATA(PyTypeObject) PyModuleDef_Type;
 #endif
-
-// TODO(lazy_imports): ifdef guards?
-PyAPI_FUNC(PyObject *) PyLazyImportModule_NewObject(PyObject *name, PyObject *globals, PyObject *locals, PyObject *fromlist, PyObject *level);
-PyAPI_FUNC(PyObject *) PyLazyImportObject_NewObject(PyObject *from, PyObject *name);
-PyAPI_FUNC(PyObject *) PyLazyImport_GetName(PyObject *lazy_import);
 
 typedef struct PyModuleDef_Base {
   PyObject_HEAD
@@ -105,6 +99,12 @@ typedef struct {
 // Internal C API
 #ifdef Py_BUILD_CORE
 extern int _PyModule_IsExtension(PyObject *obj);
+#endif
+
+#ifndef Py_LIMITED_API
+#  define Py_CPYTHON_MODULEOBJECT_H
+#  include "cpython/moduleobject.h"
+#  undef Py_CPYTHON_MODULEOBJECT_H
 #endif
 
 #ifdef __cplusplus
