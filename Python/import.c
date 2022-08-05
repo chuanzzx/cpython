@@ -1836,10 +1836,18 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
             Py_DECREF(name);
             return -1;
         }
-        PyObject *lazy_loaded_set = PyDict_GetItem(lazy_loaded, parent);
+        PyObject *lazy_loaded_set = PyDict_GetItemWithError(lazy_loaded, parent);
         if (lazy_loaded_set == NULL) {
+            if (PyErr_Occurred()) {
+                Py_DECREF(child);
+                Py_DECREF(parent);
+                Py_DECREF(name);
+                return -1;
+            }
             lazy_loaded_set = PySet_New(NULL);
             if (lazy_loaded_set == NULL) {
+                Py_DECREF(child);
+                Py_DECREF(parent);
                 Py_DECREF(name);
                 return -1;
             }
@@ -3196,8 +3204,12 @@ _imp__maybe_set_submodule_attribute_impl(PyObject *module, PyObject *parent,
     /* add attributes to child */
     PyObject *lazy_loaded = tstate->interp->lazy_loaded;
     if (lazy_loaded != NULL) {
-        PyObject *lazy_loaded_set = PyDict_GetItem(lazy_loaded, name);
-        if (lazy_loaded_set != NULL) {
+        PyObject *lazy_loaded_set = PyDict_GetItemWithError(lazy_loaded, name);
+        if (lazy_loaded_set == NULL) {
+            if (PyErr_Occurred()) {
+                goto error;
+            }
+        } else {
             PyObject *attr_name;
             Py_ssize_t pos = 0;
             Py_hash_t hash;
