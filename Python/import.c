@@ -31,10 +31,6 @@ int _PyImport_LazyImportsCacheSeq = 0;
 
 /* Forward references */
 static PyObject *import_add_module(PyThreadState *tstate, PyObject *name);
-PyObject * _PyImport_ImportModuleLevelObject(
-    PyObject *name, PyObject *globals,
-    PyObject *locals, PyObject *fromlist,
-    int level);
 
 /* See _PyImport_FixupExtensionObject() below */
 static PyObject *extensions = NULL;
@@ -1964,12 +1960,9 @@ PyImport_EagerImportName(PyObject *builtins, PyObject *globals, PyObject *locals
         if (ilevel == -1 && _PyErr_Occurred(tstate)) {
             return NULL;
         }
-        res = _PyImport_ImportModuleLevelObject(
-                        name,
-                        globals,
-                        locals == NULL ? Py_None :locals,
-                        fromlist,
-                        ilevel);
+        res = PyImport_ImportModuleLevelObject(name, globals,
+                                               locals == NULL ? Py_None :locals,
+                                               fromlist, ilevel);
         return res;
     }
 
@@ -2234,7 +2227,7 @@ PyImport_GetModule(PyObject *name)
 }
 
 PyObject *
-_PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
+PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
                                  PyObject *locals, PyObject *fromlist,
                                  int level)
 {
@@ -2382,14 +2375,6 @@ _PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
         remove_importlib_frames(tstate);
     }
     return final_mod;
-}
-
-PyObject *
-PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
-                                 PyObject *locals, PyObject *fromlist,
-                                 int level)
-{
-    return _PyImport_ImportModuleLevelObject(name, globals, locals, fromlist, level);
 }
 
 PyObject *
