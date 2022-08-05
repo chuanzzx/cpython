@@ -1758,11 +1758,13 @@ static int
 lazy_loaded_contains_parent(PyObject *module, PyObject *name)
 {
     assert(module != NULL);
-    PyObject *lazy_submodules = ((PyModuleObject *)module)->md_lazy_submodules;
+    PyObject *lazy_submodules = PyObject_GetAttr(module, &_Py_ID(__lazy_submodules__));
     if (lazy_submodules == NULL) {
+        PyErr_Clear();
         return 0;
     }
     int res = PySet_Contains(lazy_submodules, name);
+    Py_DECREF(lazy_submodules);
     if (res < 0) {
         return -1;
     }
@@ -1773,15 +1775,21 @@ static int
 lazy_loaded_add_parent(PyObject *module, PyObject *name)
 {
     assert(module != NULL);
-    PyObject *lazy_submodules = ((PyModuleObject *)module)->md_lazy_submodules;
+    PyObject *lazy_submodules = PyObject_GetAttr(module, &_Py_ID(__lazy_submodules__));
     if (lazy_submodules == NULL) {
+        PyErr_Clear();
         lazy_submodules = PySet_New(NULL);
         if (lazy_submodules == NULL) {
             return -1;
         }
-        ((PyModuleObject *)module)->md_lazy_submodules = lazy_submodules;
+        if (PyObject_SetAttr(module, &_Py_ID(__lazy_submodules__), lazy_submodules) < 0) {
+            Py_DECREF(lazy_submodules);
+            return -1;
+        }
     }
-    if (PySet_Add(lazy_submodules, name) < 0) {
+    int res = PySet_Add(lazy_submodules, name);
+    Py_DECREF(lazy_submodules);
+    if (res < 0) {
         return -1;
     }
     return 0;

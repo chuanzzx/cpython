@@ -1453,7 +1453,7 @@ class SizeofTest(unittest.TestCase):
         check(int(PyLong_BASE**2-1), vsize('') + 2*self.longdigit)
         check(int(PyLong_BASE**2), vsize('') + 3*self.longdigit)
         # module
-        check(unittest, size('PnPPPP'))
+        check(unittest, size('PnPPP'))
         # None
         check(None, size(''))
         # NotImplementedType
