@@ -135,6 +135,7 @@ struct _Py_global_strings {
         STRUCT_FOR_ID(__iter__)
         STRUCT_FOR_ID(__itruediv__)
         STRUCT_FOR_ID(__ixor__)
+        STRUCT_FOR_ID(__lazy_submodules__)
         STRUCT_FOR_ID(__le__)
         STRUCT_FOR_ID(__len__)
         STRUCT_FOR_ID(__length_hint__)
