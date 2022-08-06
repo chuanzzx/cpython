@@ -3156,7 +3156,11 @@ _imp__maybe_set_submodule_attribute_impl(PyObject *module, PyObject *parent,
     assert(parent != NULL);
 
     /* add attributes to parent */
-    if (parent != Py_None) {
+    int has_parent = PyObject_IsTrue(parent);
+    if (has_parent < 0) {
+        goto error;
+    }
+    if (has_parent) {
         PyObject *parent_module = _PyImport_GetModule(tstate, parent);
         if (parent_module != NULL) {
             parent_dict = PyObject_GetAttr(parent_module, &_Py_ID(__dict__));
