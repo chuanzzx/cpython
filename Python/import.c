@@ -2093,17 +2093,18 @@ _imp_load_lazy_import_impl(PyLazyImport *lazy_import, int deep)
 {
     PyObject *obj = NULL;
     if (lazy_import->lz_lazy_import == NULL) {
-        Py_ssize_t dot;
-        if (lazy_import->lz_fromlist != NULL &&
-            lazy_import->lz_fromlist != Py_None &&
-            PyObject_IsTrue(lazy_import->lz_fromlist)) {
-            deep = 1;
+        Py_ssize_t dot = -1;
+        if (!deep && lazy_import->lz_fromlist != NULL) {
+            deep = PyObject_IsTrue(lazy_import->lz_fromlist);
+            if (deep < 0) {
+                goto error;
+            }
         }
         if (!deep) {
             dot = PyUnicode_FindChar(lazy_import->lz_name, '.', 0, PyUnicode_GET_LENGTH(lazy_import->lz_name), 1);
-            if (dot < 0) {
-                deep = 1;
-            }
+        }
+        if (dot < 0) {
+            deep = 1;
         }
         if (deep) {
             obj = PyImport_EagerImportName(PyEval_GetBuiltins(),
