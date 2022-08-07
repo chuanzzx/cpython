@@ -1815,6 +1815,7 @@ new_lazy_import(PyObject *parent, PyObject *child, PyObject *globals, PyObject *
 static int
 feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
 {
+    int laziness = 1;
     PyObject *lazy_loaded = tstate->interp->lazy_loaded;
     if (lazy_loaded == NULL) {
         lazy_loaded = PyDict_New();
@@ -1863,6 +1864,9 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
                 return -1;
             }
             Py_DECREF(lazy_loaded_set);
+            if (laziness) {
+                ++laziness;
+            }
         }
         if (PySet_Add(lazy_loaded_set, child) < 0) {
             Py_DECREF(child);
@@ -1871,7 +1875,6 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
             return -1;
         }
 
-        PyObject *parent_dict = NULL;
         PyObject *parent_module = _PyImport_GetModule(tstate, parent);
         if (parent_module == NULL) {
             if (PyErr_Occurred()) {
@@ -1881,7 +1884,7 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
                 return -1;
             }
         } else {
-            parent_dict = PyObject_GetAttr(parent_module, &_Py_ID(__dict__));
+            PyObject *parent_dict = PyObject_GetAttr(parent_module, &_Py_ID(__dict__));
             if (parent_dict == NULL) {
                 Py_DECREF(parent_module);
                 Py_DECREF(child);
@@ -1889,10 +1892,8 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
                 Py_DECREF(name);
                 return -1;
             }
-        }
-        if (parent_dict == NULL || PyDict_CheckExact(parent_dict)) {
-            if (parent_module != NULL && !lazy_loaded_contains_parent(parent_module, child)) {
-                if (parent_dict != NULL) {
+            if (PyDict_CheckExact(parent_dict)) {
+                if (!lazy_loaded_contains_parent(parent_module, child)) {
                     PyLazyImport *lazy_module_attr = new_lazy_import(parent, child, parent_dict, parent_dict);
                     if (lazy_module_attr == NULL) {
                         Py_DECREF(parent_dict);
@@ -1912,30 +1913,31 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
                         return -1;
                     }
                     Py_DECREF(lazy_module_attr);
+                    if (lazy_loaded_add_parent(parent_module, child) < 0) {
+                        Py_XDECREF(parent_dict);
+                        Py_DECREF(parent_module);
+                        Py_DECREF(child);
+                        Py_DECREF(parent);
+                        Py_DECREF(name);
+                        return -1;
+                    }
+                    if (laziness) {
+                        ++laziness;
+                    }
                 }
-                if (lazy_loaded_add_parent(parent_module, child) < 0) {
-                    Py_XDECREF(parent_dict);
-                    Py_DECREF(parent_module);
-                    Py_DECREF(child);
-                    Py_DECREF(parent);
-                    Py_DECREF(name);
-                    return -1;
-                }
-                int verbose = _PyInterpreterState_GetConfig(tstate->interp)->verbose;
-                if (verbose) {
-                    fprintf(stderr, "# lazy import '%s'\n", PyUnicode_AsUTF8(name));
-                }
+            } else {
+                laziness = 0;  /* should be eager */
             }
+            Py_DECREF(parent_dict);
         }
 
-        Py_XDECREF(parent_dict);
         Py_XDECREF(parent_module);
         Py_DECREF(child);
         Py_DECREF(name);
         name = parent;
     }
     Py_DECREF(name);
-    return 0;
+    return laziness;
 }
 
 PyObject *
@@ -2004,11 +2006,21 @@ PyImport_LazyImportName(PyObject *builtins, PyObject *globals, PyObject *locals,
         Py_INCREF(abs_name);
     }
 
-    if (feed_lazy_loaded(tstate, abs_name) < 0) {
+    int laziness = feed_lazy_loaded(tstate, abs_name);
+    if (laziness < 0) {
         goto error;
     }
-
-    lazy_module = PyLazyImportModule_NewObject(abs_name, globals, locals, fromlist, NULL);
+    if (laziness > 1) {
+        int verbose = _PyInterpreterState_GetConfig(tstate->interp)->verbose;
+        if (verbose) {
+            fprintf(stderr, "# lazy import '%s'\n", PyUnicode_AsUTF8(name));
+        }
+    }
+    if (laziness == 0) {
+        lazy_module = PyImport_EagerImportName(builtins, globals, locals, name, fromlist, level);
+    } else {
+        lazy_module = PyLazyImportModule_NewObject(abs_name, globals, locals, fromlist, NULL);
+    }
 
   error:
     Py_XDECREF(abs_name);
