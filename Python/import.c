@@ -1864,9 +1864,6 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
                 return -1;
             }
             Py_DECREF(lazy_loaded_set);
-            if (laziness) {
-                ++laziness;
-            }
         }
         if (PySet_Add(lazy_loaded_set, child) < 0) {
             Py_DECREF(child);
@@ -1920,9 +1917,6 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
                         Py_DECREF(parent);
                         Py_DECREF(name);
                         return -1;
-                    }
-                    if (laziness) {
-                        ++laziness;
                     }
                 }
             } else {
@@ -2009,12 +2003,6 @@ PyImport_LazyImportName(PyObject *builtins, PyObject *globals, PyObject *locals,
     int laziness = feed_lazy_loaded(tstate, abs_name);
     if (laziness < 0) {
         goto error;
-    }
-    if (laziness > 1) {
-        int verbose = _PyInterpreterState_GetConfig(tstate->interp)->verbose;
-        if (verbose) {
-            fprintf(stderr, "# lazy import '%s'\n", PyUnicode_AsUTF8(name));
-        }
     }
     if (laziness == 0) {
         lazy_module = PyImport_EagerImportName(builtins, globals, locals, name, fromlist, level);

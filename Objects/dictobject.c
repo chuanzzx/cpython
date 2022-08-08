@@ -1307,6 +1307,43 @@ insert_into_dictkeys(PyDictKeysObject *keys, PyObject *name)
     return ix;
 }
 
+static void
+verbose_lazy_import(PyObject *value)
+{
+    PyThreadState *tstate = _PyThreadState_GET();
+    int verbose = _PyInterpreterState_GetConfig(tstate->interp)->verbose;
+    if (verbose) {
+        static PyObject *registry = NULL;
+        if (registry == NULL) {
+            registry = PySet_New(NULL);
+            if (registry == NULL) {
+                PyErr_Clear();
+                return;
+            }
+        }
+        PyObject *name = PyLazyImport_GetName(value);
+        if (name == NULL) {
+            PyErr_Clear();
+            return;
+        }
+        int has_it = PySet_Contains(registry, name);
+        if (has_it < 0) {
+            Py_DECREF(name);
+            PyErr_Clear();
+            return;
+        }
+        if (!has_it) {
+            fprintf(stderr, "# lazy import '%s'\n", PyUnicode_AsUTF8(name));
+            if (PySet_Add(registry, name) < 0) {
+                Py_DECREF(name);
+                PyErr_Clear();
+                return;
+            }
+        }
+        Py_DECREF(name);
+    }
+}
+
 /*
 Internal routine to insert a new item into the table.
 Used both by the internal resize routine and by the public insert routine.
@@ -1367,6 +1404,7 @@ insertdict(PyDictObject *mp, PyObject *key, Py_hash_t hash, PyObject *value)
         mp->ma_used++;
         if (PyLazyImport_CheckExact(value)) {
             mp->ma_keys->dk_lazy_imports = 1;
+            verbose_lazy_import(value);
         }
         mp->ma_version_tag = DICT_NEXT_VERSION();
         mp->ma_keys->dk_usable--;
@@ -1395,6 +1433,7 @@ insertdict(PyDictObject *mp, PyObject *key, Py_hash_t hash, PyObject *value)
         }
         if (PyLazyImport_CheckExact(value)) {
             mp->ma_keys->dk_lazy_imports = 1;
+            verbose_lazy_import(value);
         }
         mp->ma_version_tag = DICT_NEXT_VERSION();
     }
@@ -1446,6 +1485,7 @@ insert_to_emptydict(PyDictObject *mp, PyObject *key, Py_hash_t hash,
     mp->ma_used++;
     if (PyLazyImport_CheckExact(value)) {
         mp->ma_keys->dk_lazy_imports = 1;
+        verbose_lazy_import(value);
     }
     mp->ma_version_tag = DICT_NEXT_VERSION();
     mp->ma_keys->dk_usable--;
