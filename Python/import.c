@@ -1816,13 +1816,13 @@ static int
 feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
 {
     int laziness = 1;
-    PyObject *lazy_loaded = tstate->interp->lazy_loaded;
-    if (lazy_loaded == NULL) {
-        lazy_loaded = PyDict_New();
-        if (lazy_loaded == NULL) {
+    PyObject *lazy_attrubutes = tstate->interp->lazy_attrubutes;
+    if (lazy_attrubutes == NULL) {
+        lazy_attrubutes = PyDict_New();
+        if (lazy_attrubutes == NULL) {
             return -1;
         }
-        tstate->interp->lazy_loaded = lazy_loaded;
+        tstate->interp->lazy_attrubutes = lazy_attrubutes;
     }
     Py_INCREF(name);
     while (true) {
@@ -1841,7 +1841,7 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
             Py_DECREF(name);
             return -1;
         }
-        PyObject *lazy_loaded_set = PyDict_GetItemWithError(lazy_loaded, parent);
+        PyObject *lazy_loaded_set = PyDict_GetItemWithError(lazy_attrubutes, parent);
         if (lazy_loaded_set == NULL) {
             if (PyErr_Occurred()) {
                 Py_DECREF(child);
@@ -1856,7 +1856,7 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
                 Py_DECREF(name);
                 return -1;
             }
-            if (PyDict_SetItem(lazy_loaded, parent, lazy_loaded_set) < 0) {
+            if (PyDict_SetItem(lazy_attrubutes, parent, lazy_loaded_set) < 0) {
                 Py_DECREF(lazy_loaded_set);
                 Py_DECREF(child);
                 Py_DECREF(parent);
@@ -3200,9 +3200,9 @@ _imp__maybe_set_submodule_attribute_impl(PyObject *module, PyObject *parent,
     }
 
     /* add attributes to child */
-    PyObject *lazy_loaded = tstate->interp->lazy_loaded;
-    if (lazy_loaded != NULL) {
-        PyObject *lazy_loaded_set = PyDict_GetItemWithError(lazy_loaded, name);
+    PyObject *lazy_attrubutes = tstate->interp->lazy_attrubutes;
+    if (lazy_attrubutes != NULL) {
+        PyObject *lazy_loaded_set = PyDict_GetItemWithError(lazy_attrubutes, name);
         if (lazy_loaded_set == NULL) {
             if (PyErr_Occurred()) {
                 goto error;
@@ -3232,7 +3232,7 @@ _imp__maybe_set_submodule_attribute_impl(PyObject *module, PyObject *parent,
                     }
                 }
             }
-            if (PyDict_DelItem(lazy_loaded, name) < 0) {
+            if (PyDict_DelItem(lazy_attrubutes, name) < 0) {
                 goto error;
             }
         }
