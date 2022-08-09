@@ -2964,7 +2964,7 @@ dict_lazy_items_only(PyDictObject *mp)
     return s;
 }
 
-int
+Py_ssize_t
 PyDict_ResolveLazyImports(PyObject *dict)
 {
     PyObject *v;
@@ -3052,16 +3052,14 @@ top:
     n = PyList_Size(v);
     if (n == 0) {
         mp->ma_keys->dk_lazy_imports = 0;
-    }
-    ASSERT_CONSISTENT(mp);
-    if (n) {
+    } else {
         if (!PyErr_Occurred()) {
             PyErr_Format(PyExc_ImportError,
                 "Unable to resolve all lazy imports");
         }
-        return -n - 1;
     }
-    return 0;
+    ASSERT_CONSISTENT(mp);
+    return n;
 }
 
 /*[clinic input]
