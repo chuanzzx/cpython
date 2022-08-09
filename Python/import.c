@@ -1815,7 +1815,7 @@ new_lazy_import(PyObject *parent, PyObject *child, PyObject *globals, PyObject *
 static int
 feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
 {
-    int laziness = 1;
+    int ret = 1;
     PyObject *lazy_attrubutes = tstate->interp->lazy_attrubutes;
     if (lazy_attrubutes == NULL) {
         lazy_attrubutes = PyDict_New();
@@ -1920,7 +1920,7 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
                     }
                 }
             } else {
-                laziness = 0;  /* should be eager */
+                ret = 0;  /* should be eager */
             }
             Py_DECREF(parent_dict);
         }
@@ -1931,7 +1931,7 @@ feed_lazy_loaded(PyThreadState *tstate, PyObject *name)
         name = parent;
     }
     Py_DECREF(name);
-    return laziness;
+    return ret;
 }
 
 PyObject *
@@ -2000,14 +2000,14 @@ PyImport_LazyImportName(PyObject *builtins, PyObject *globals, PyObject *locals,
         Py_INCREF(abs_name);
     }
 
-    int laziness = feed_lazy_loaded(tstate, abs_name);
-    if (laziness < 0) {
+    int lazy = feed_lazy_loaded(tstate, abs_name);
+    if (lazy < 0) {
         goto error;
     }
-    if (laziness == 0) {
-        lazy_module = PyImport_EagerImportName(builtins, globals, locals, name, fromlist, level);
-    } else {
+    if (lazy) {
         lazy_module = PyLazyImportModule_NewObject(abs_name, globals, locals, fromlist, NULL);
+    } else {
+        lazy_module = PyImport_EagerImportName(builtins, globals, locals, name, fromlist, level);
     }
 
   error:
