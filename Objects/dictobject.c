@@ -1269,9 +1269,9 @@ find_empty_slot(PyDictKeysObject *keys, Py_hash_t hash)
 }
 
 static int
-insertion_resize(PyDictObject *mp, int unicode, int lazy_imports)
+insertion_resize(PyDictObject *mp, int unicode)
 {
-    return dictresize(mp, calculate_log2_keysize(GROWTH_RATE(mp)), unicode, lazy_imports);
+    return dictresize(mp, calculate_log2_keysize(GROWTH_RATE(mp)), unicode, 0);
 }
 
 static Py_ssize_t
@@ -1356,7 +1356,7 @@ insertdict(PyDictObject *mp, PyObject *key, Py_hash_t hash, PyObject *value)
     PyObject *old_value;
 
     if (DK_IS_UNICODE(mp->ma_keys) && !PyUnicode_CheckExact(key)) {
-        if (insertion_resize(mp, 0, 0) < 0)
+        if (insertion_resize(mp, 0) < 0)
             goto Fail;
         assert(mp->ma_keys->dk_kind == DICT_KEYS_GENERAL);
     }
@@ -1373,7 +1373,7 @@ insertdict(PyDictObject *mp, PyObject *key, Py_hash_t hash, PyObject *value)
         assert(old_value == NULL);
         if (mp->ma_keys->dk_usable <= 0) {
             /* Need to resize. */
-            if (insertion_resize(mp, 1, 0) < 0)
+            if (insertion_resize(mp, 1) < 0)
                 goto Fail;
         }
 
@@ -3738,7 +3738,7 @@ PyDict_SetDefault(PyObject *d, PyObject *key, PyObject *defaultobj)
     }
 
     if (!PyUnicode_CheckExact(key) && DK_IS_UNICODE(mp->ma_keys)) {
-        if (insertion_resize(mp, 0, 0) < 0) {
+        if (insertion_resize(mp, 0) < 0) {
             return NULL;
         }
     }
@@ -3751,7 +3751,7 @@ PyDict_SetDefault(PyObject *d, PyObject *key, PyObject *defaultobj)
         mp->ma_keys->dk_version = 0;
         value = defaultobj;
         if (mp->ma_keys->dk_usable <= 0) {
-            if (insertion_resize(mp, 1, 0) < 0) {
+            if (insertion_resize(mp, 1) < 0) {
                 return NULL;
             }
         }
