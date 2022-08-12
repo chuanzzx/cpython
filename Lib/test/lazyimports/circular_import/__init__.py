@@ -1,6 +1,10 @@
 import self
 import importlib
 
+"""
+Test lazy imports when importing a circular import
+This circle occurs on the same level files
+"""
 if importlib.is_lazy_imports_enabled():
     import test.lazyimports.circular_import.main
 else:

@@ -1,6 +1,10 @@
 import self
 import importlib
 
+"""
+Test lazy imports when importing a circular import
+This circle is across different level files
+"""
 if importlib.is_lazy_imports_enabled():
     import test.lazyimports.deferred_resolve_failure.main
 else:
