@@ -1687,46 +1687,42 @@ PyDict_GetItem(PyObject *op, PyObject *key)
 
 Py_ssize_t
 _PyDict_GetItemHint(PyDictObject *mp, PyObject *key,
-                    Py_ssize_t hint, PyObject **value)
+                    Py_ssize_t hint, PyObject **value_addr)
 {
-    assert(*value == NULL);
+    assert(*value_addr == NULL);
     assert(PyDict_CheckExact((PyObject*)mp));
     assert(PyUnicode_CheckExact(key));
 
     if (hint >= 0 && hint < mp->ma_keys->dk_nentries) {
-        PyObject *res = NULL;
+        PyObject *value = NULL;
+        PyDictKeysObject *dk;
+        DictKeysKind kind;
 
-        if (DK_IS_UNICODE(mp->ma_keys)) {
-            PyDictUnicodeEntry *ep = DK_UNICODE_ENTRIES(mp->ma_keys) + (size_t)hint;
+        dk = mp->ma_keys;
+        kind = dk->dk_kind;
+
+        if (kind != DICT_KEYS_GENERAL) {
+            PyDictUnicodeEntry *ep = &DK_UNICODE_ENTRIES(dk)[hint];
             if (ep->me_key == key) {
-                if (mp->ma_keys->dk_kind == DICT_KEYS_SPLIT) {
+                if (kind == DICT_KEYS_SPLIT) {
                     assert(mp->ma_values != NULL);
-                    res = mp->ma_values->values[(size_t)hint];
+                    value = mp->ma_values->values[hint];
                 }
                 else {
-                    res = ep->me_value;
-                }
-                if (res != NULL) {
-                    *value = res;
-                    return hint;
+                    value = ep->me_value;
                 }
             }
         }
         else {
-            PyDictKeyEntry *ep = DK_ENTRIES(mp->ma_keys) + (size_t)hint;
+            PyDictKeyEntry *ep = &DK_ENTRIES(dk)[hint];
             if (ep->me_key == key) {
-                if (mp->ma_keys->dk_kind == DICT_KEYS_SPLIT) {
-                    assert(mp->ma_values != NULL);
-                    res = mp->ma_values->values[(size_t)hint];
-                }
-                else {
-                    res = ep->me_value;
-                }
-                if (res != NULL) {
-                    *value = res;
-                    return hint;
-                }
+                value = ep->me_value;
             }
+        }
+
+        if (value != NULL) {
+            *value_addr = value;
+            return hint;
         }
     }
 
@@ -1738,8 +1734,9 @@ _PyDict_GetItemHint(PyDictObject *mp, PyObject *key,
         }
     }
 
-    return _Py_dict_lookup(mp, key, hash, value);
+    return _Py_dict_lookup(mp, key, hash, value_addr);
 }
+
 
 /* Same as PyDict_GetItemWithError() but with hash supplied by caller.
    This returns NULL *with* an exception set if an exception occurred.
