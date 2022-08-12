@@ -1,5 +1,5 @@
 """
-Test `disable_lazy_imports`
+Test disabling lazy imports by using `importlib.set_lazy_imports(False)`
 """
 import self
 if not self._lazy_imports:

@@ -1,5 +1,5 @@
 """
-Test the behavior of dict.update when it was manipulating a lazy object
+Test the behavior of dict.update when it is manipulating a lazy object
 """
 import self
 import warnings
