@@ -1,3 +1,6 @@
+"""
+Test the behavior of dict.update when it was manipulating a lazy object
+"""
 import self
 import warnings
 

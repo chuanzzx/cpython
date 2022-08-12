@@ -1,3 +1,6 @@
+"""
+Test deleting a module from a dict
+"""
 import self
 import sys
 
