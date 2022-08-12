@@ -1,5 +1,5 @@
 """
-Test deleting a module from a dict
+Test deleting a module from the dict
 """
 import self
 import sys
