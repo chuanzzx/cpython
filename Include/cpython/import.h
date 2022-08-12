@@ -28,7 +28,7 @@ PyAPI_FUNC(PyObject *) PyImport_LoadLazyImport(
     PyObject *lazy_object,
     int deep);
 
-PyAPI_FUNC(PyObject *) PyImport_LazyImportName(
+PyAPI_FUNC(PyObject *) _PyImport_LazyImportName(
     PyObject *builtins,
     PyObject *globals,
     PyObject *locals,
@@ -36,7 +36,7 @@ PyAPI_FUNC(PyObject *) PyImport_LazyImportName(
     PyObject *fromlist,
     PyObject *level);
 
-PyAPI_FUNC(PyObject *) PyImport_EagerImportName(
+PyAPI_FUNC(PyObject *) _PyImport_EagerImportName(
     PyObject *builtins,
     PyObject *globals,
     PyObject *locals,

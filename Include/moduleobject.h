@@ -11,7 +11,6 @@ PyAPI_DATA(PyTypeObject) PyModule_Type;
 
 #define PyModule_Check(op) PyObject_TypeCheck((op), &PyModule_Type)
 #define PyModule_CheckExact(op) Py_IS_TYPE((op), &PyModule_Type)
-#define PyLazyImport_CheckExact(op) Py_IS_TYPE((op), &PyLazyImport_Type)
 
 #if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03030000
 PyAPI_FUNC(PyObject *) PyModule_NewObject(
@@ -84,27 +83,10 @@ struct PyModuleDef {
   freefunc m_free;
 };
 
-typedef struct {
-    PyObject_HEAD
-    PyObject *lz_lazy_import;
-    PyObject *lz_name;
-    PyObject *lz_globals;
-    PyObject *lz_locals;
-    PyObject *lz_fromlist;
-    PyObject *lz_level;
-    PyObject *lz_obj;
-    PyObject *lz_resolving;
-} PyLazyImport;
 
 // Internal C API
 #ifdef Py_BUILD_CORE
 extern int _PyModule_IsExtension(PyObject *obj);
-#endif
-
-#ifndef Py_LIMITED_API
-#  define Py_CPYTHON_MODULEOBJECT_H
-#  include "cpython/moduleobject.h"
-#  undef Py_CPYTHON_MODULEOBJECT_H
 #endif
 
 #ifdef __cplusplus

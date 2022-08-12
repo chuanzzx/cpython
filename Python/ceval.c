@@ -14,6 +14,7 @@
 #include "pycore_code.h"
 #include "pycore_function.h"
 #include "pycore_initconfig.h"    // _PyStatus_OK()
+#include "pycore_lazyimport.h"    // PyLazyImport_CheckExact()
 #include "pycore_long.h"          // _PyLong_GetZero()
 #include "pycore_object.h"        // _PyObject_GC_TRACK()
 #include "pycore_moduleobject.h"  // PyModuleObject
@@ -4149,7 +4150,7 @@ handle_eval_breaker:
             PyObject *fromlist = POP();
             PyObject *level = TOP();
             PyObject *res;
-            res = PyImport_EagerImportName(
+            res = _PyImport_EagerImportName(
                 BUILTINS(), GLOBALS(), LOCALS(), name, fromlist, level);
             Py_DECREF(level);
             Py_DECREF(fromlist);
@@ -4165,10 +4166,10 @@ handle_eval_breaker:
             PyObject *level = TOP();
             PyObject *res;
             if (_PyImport_IsLazyImportsEnabled(tstate)) {
-                res = PyImport_LazyImportName(
+                res = _PyImport_LazyImportName(
                     BUILTINS(), GLOBALS(), LOCALS(), name, fromlist, level);
             } else {
-                res = PyImport_EagerImportName(
+                res = _PyImport_EagerImportName(
                     BUILTINS(), GLOBALS(), LOCALS(), name, fromlist, level);
             }
             Py_DECREF(level);
@@ -4221,7 +4222,7 @@ handle_eval_breaker:
             PyObject *from = TOP();
             PyObject *res;
             if (PyLazyImport_CheckExact(from))
-                res = PyLazyImportObject_NewObject(from, name);
+                res = PyLazyImport_NewObject(from, name);
             else
                 res = _PyImport_ImportFrom(tstate, from, name);
             PUSH(res);
