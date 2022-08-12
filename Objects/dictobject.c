@@ -118,6 +118,7 @@ As a consequence of this, split keys have a maximum size of 16.
 #include "pycore_code.h"          // stats
 #include "pycore_dict.h"          // PyDictKeysObject
 #include "pycore_gc.h"            // _PyObject_GC_IS_TRACKED()
+#include "pycore_lazyimport.h"    // PyLazyImport_CheckExact
 #include "pycore_object.h"        // _PyObject_GC_TRACK()
 #include "pycore_pyerrors.h"      // _PyErr_Fetch()
 #include "pycore_pystate.h"       // _PyThreadState_GET()
@@ -2943,7 +2944,7 @@ dict_lazy_items_only(PyDictObject *mp)
     Py_hash_t hash;
     while (_PyDict_Next((PyObject*)mp, &pos, &key, &value, &hash, &value_ptr)) {
         if (PyLazyImport_CheckExact(value)) {
-            PyObject *resolved_value = ((PyLazyImport *)value)->lz_obj;
+            PyObject *resolved_value = ((PyLazyImportObject *)value)->lz_resolved;
             if (resolved_value != NULL) {
                 Py_INCREF(resolved_value);
                 Py_DECREF(*value_ptr);
