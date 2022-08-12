@@ -1457,7 +1457,8 @@ insert_to_emptydict(PyDictObject *mp, PyObject *key, Py_hash_t hash,
     assert(mp->ma_keys == Py_EMPTY_KEYS);
 
     int unicode = PyUnicode_CheckExact(key);
-    PyDictKeysObject *newkeys = new_keys_object(PyDict_LOG_MINSIZE, unicode, 0);
+    int lazy_imports = PyLazyImport_CheckExact(value);
+    PyDictKeysObject *newkeys = new_keys_object(PyDict_LOG_MINSIZE, unicode, lazy_imports);
     if (newkeys == NULL) {
         Py_DECREF(key);
         Py_DECREF(value);
@@ -1483,8 +1484,7 @@ insert_to_emptydict(PyDictObject *mp, PyObject *key, Py_hash_t hash,
         ep->me_value = value;
     }
     mp->ma_used++;
-    if (PyLazyImport_CheckExact(value)) {
-        mp->ma_keys->dk_lazy_imports = 1;
+    if (lazy_imports) {
         verbose_lazy_import(value);
     }
     mp->ma_version_tag = DICT_NEXT_VERSION();
